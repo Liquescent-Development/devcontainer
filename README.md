@@ -467,7 +467,7 @@ npm install -g @anthropic-ai/claude-code@latest
 
 ### Persistent Data
 - Shell history (both bash and zsh) is persisted across container rebuilds
-- Claude configuration is mounted from host `~/.claude` directory
+- Claude agents and CLAUDE.md are mounted from host `~/.claude` directory
 - Workspace files are bind-mounted for real-time editing
 
 ### Performance Optimization
