@@ -63,7 +63,7 @@ To use this devcontainer template, you'll need:
 - **oh-my-zsh** with language-specific plugins (git, fzf, npm, docker, golang, rust, python, dotnet)
 - **oh-my-posh** with custom liquescent theme
 - **fzf** for fuzzy finding and enhanced command-line experience
-- **direnv** automatically loads `.env` files when you enter the workspace
+- **direnv** for automatic `.env` file loading (with security approval)
 - Persistent history for both bash and zsh across container rebuilds
 - Pre-configured PATH for all development languages
 
@@ -133,7 +133,7 @@ The `.env.example` file shows all available configuration options:
   - `MOUNT_HOST_GIT_CONFIG`: Set to `true` to use host git config (default: `false`)
   - `TZ`: Set your timezone, e.g., `America/Phoenix` (default: `UTC`)
 - **Git ignored**: The `.env` file is already in `.gitignore`
-- **Auto-loading**: Environment variables from `.env` are automatically loaded by direnv when you enter the workspace
+- **Auto-loading**: Environment variables from `.env` files are automatically loaded by direnv when you enter any directory containing a `.env` file (requires one-time `direnv allow` approval for security)
 
 **Note on Timezone**: The TZ setting in `.env` only affects the running container. To set timezone during build, export TZ in your shell before opening VS Code:
 ```bash
