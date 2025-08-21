@@ -210,8 +210,10 @@ RUN echo '# Path to oh-my-zsh installation' > ~/.zshrc && \
     echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc && \
     echo 'export VISUAL=vim' >> ~/.zshrc
 
-# Install Claude
-RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
+# Install Claude and create config directory
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} && \
+    mkdir -p /home/node/.claude && \
+    chown -R node:node /home/node/.claude
 
 
 # Copy and set up scripts and theme
