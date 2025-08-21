@@ -199,10 +199,14 @@ RUN echo '# Path to oh-my-zsh installation' > ~/.zshrc && \
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 
-# Copy and set up firewall script
+# Copy and set up scripts
 COPY init-firewall.sh /usr/local/bin/
+COPY setup-git.sh /usr/local/bin/
+COPY create-limited-git-setup.sh /usr/local/bin/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
+  chmod +x /usr/local/bin/setup-git.sh && \
+  chmod +x /usr/local/bin/create-limited-git-setup.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node

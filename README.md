@@ -79,6 +79,12 @@ To use this devcontainer template, you'll need:
 - **.NET SDK 8.0** with full development support and telemetry disabled
 - **Python 3** with pip, venv, and essential tools (pipenv, poetry, black, pylint, pytest, requests, ipython)
 
+### Git Integration
+- **Automatic Git Configuration**: Mounts your host's `.gitconfig` and `.ssh` directory
+- **Delta Integration**: Automatically configured for enhanced git diffs
+- **GitHub CLI**: Pre-installed and ready for authentication
+- **Configuration Verification**: Runs setup script on container creation to verify git settings
+
 ### VS Code Integration
 - Pre-configured extensions for JavaScript/TypeScript development
 - Ready for language-specific extensions (Go, Rust, .NET, Python)

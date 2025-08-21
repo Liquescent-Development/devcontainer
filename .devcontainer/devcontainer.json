@@ -44,13 +44,16 @@
   "mounts": [
     "source=claude-code-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
-    "source=${localEnv:HOME}/Library/Fonts,target=/usr/share/fonts/truetype/custom,type=bind,readonly"
+    "source=${localEnv:HOME}/Library/Fonts,target=/usr/share/fonts/truetype/custom,type=bind,readonly",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig.host,type=bind,readonly",
+    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh-host,type=bind,readonly"
   ],
   "containerEnv": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
-    "CLAUDE_CONFIG_DIR": "/home/node/.claude"
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
+    "MOUNT_HOST_GIT_CONFIG": "${localEnv:MOUNT_HOST_GIT_CONFIG:false}"
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "sudo /usr/local/bin/init-firewall.sh"
+  "postCreateCommand": "sudo /usr/local/bin/init-firewall.sh && /usr/local/bin/setup-git.sh"
 }
