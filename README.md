@@ -20,9 +20,12 @@ A comprehensive development container template that provides a consistent, secur
 # Clone this template
 git clone https://github.com/yourusername/devcontainer.git temp-devcontainer
 
-# Copy the .devcontainer folder to your project
+# Copy the .devcontainer folder to your project (includes everything needed)
 cp -r temp-devcontainer/.devcontainer /path/to/your/project/
-cp temp-devcontainer/liquescent.omp.json /path/to/your/project/
+
+# (Optional) Set up environment configuration
+cp temp-devcontainer/.env.example /path/to/your/project/.env
+# Edit .env if you want to use host git configuration
 
 # Clean up
 rm -rf temp-devcontainer
@@ -48,7 +51,7 @@ To use this devcontainer template, you'll need:
 2. **Colima** - Lightweight Docker alternative with minimal resource usage
 3. **Rancher Desktop** - Full-featured Kubernetes and container management
 4. **Podman** - Daemonless container engine with enhanced security
-5. **Docker Desktop** - Traditional Docker solution (higher resource usage)
+5. **Docker Desktop** - Traditional Docker solution
 
 ### Development Environment
 - **VS Code** with the **Dev Containers extension** installed
@@ -80,10 +83,65 @@ To use this devcontainer template, you'll need:
 - **Python 3** with pip, venv, and essential tools (pipenv, poetry, black, pylint, pytest, requests, ipython)
 
 ### Git Integration
-- **Automatic Git Configuration**: Mounts your host's `.gitconfig` and `.ssh` directory
-- **Delta Integration**: Automatically configured for enhanced git diffs
+
+The devcontainer supports two git configuration modes, controlled by an environment variable:
+
+#### Option 1: Isolated Container (Default)
+- **Privacy-focused**: Your personal git configuration stays on your host
+- **Container-specific setup**: Run `/usr/local/bin/create-limited-git-setup.sh` after container starts
+- **Supports**: Personal Access Tokens, container-specific SSH keys, or GitHub CLI auth
+
+#### Option 2: Use Host Git Configuration
+To use your host's git configuration and SSH keys:
+
+**Method A: Using .env file (Recommended)**
+1. Create a `.env` file in your project root:
+   ```bash
+   # Copy the example file to create your .env
+   cp .env.example .env
+
+   # Edit .env and set:
+   MOUNT_HOST_GIT_CONFIG=true
+   ```
+2. Open in VS Code and select "Reopen in Container"
+   - The setup script will read your .env file automatically
+
+**Method B: Using environment variable**
+1. Set the environment variable before opening VS Code:
+   ```bash
+   export MOUNT_HOST_GIT_CONFIG=true
+   code /path/to/your/project
+   ```
+   - This only works if VS Code inherits your shell environment
+
+When enabled, this will:
+- Symlink your host's `.gitconfig` into the container
+- Symlink your host's `.ssh` directory for SSH key access
+- Use your existing git configuration as-is (read-only)
+
+**Note**: Delta (enhanced diffs) is installed in the container. To use it with host config:
+- Either install delta on your host: `brew install git-delta` (macOS) or see [delta installation](https://github.com/dandavison/delta#installation)
+- Or use the isolated container mode which configures delta automatically
+
+#### Environment Variable Configuration
+
+The `.env.example` file shows all available configuration options:
+- **Location**: Copy to `.env` in your project root
+- **Variables**:
+  - `MOUNT_HOST_GIT_CONFIG`: Set to `true` to use host git config (default: `false`)
+  - `TZ`: Set your timezone, e.g., `America/Phoenix` (default: `UTC`)
+- **Git ignored**: The `.env` file is already in `.gitignore`
+
+**Note on Timezone**: The TZ setting in `.env` only affects the running container. To set timezone during build, export TZ in your shell before opening VS Code:
+```bash
+export TZ=America/Phoenix
+code /path/to/your/project
+```
+
+Both options include:
 - **GitHub CLI**: Pre-installed and ready for authentication
-- **Configuration Verification**: Runs setup script on container creation to verify git settings
+- **Git Delta**: Enhanced diff visualization
+- **Configuration Verification**: Automatic validation on container start
 
 ### VS Code Integration
 - Pre-configured extensions for JavaScript/TypeScript development
@@ -145,10 +203,13 @@ The devcontainer implements a restrictive network security model:
 - **GitHub** (dynamically fetched IP ranges for web, API, and git operations)
 - **npm registry** (registry.npmjs.org)
 - **Anthropic APIs** (api.anthropic.com, statsig.anthropic.com, statsig.com, sentry.io)
-- **Host network** (for local development and services)
+- **Host machine ports** (specific ports only):
+  - Proxy: 1080 (SOCKS5)
+  - Web: 80, 443, 8080, 8443
+  - Databases: 5432 (PostgreSQL), 3306 (MySQL), 27017 (MongoDB), 6379 (Redis), 9200 (Elasticsearch)
+  - Dev servers: 3000, 4200, 5000, 8000, 9000
 - **DNS resolution** (UDP port 53)
 - **SSH connections** (port 22)
-- **SOCKS5 proxy** (host.docker.internal:1080)
 
 ### Security Features
 - Default DROP policy for all traffic
@@ -282,7 +343,7 @@ Add custom environment variables to the devcontainer configuration:
 ### Container Won't Start
 
 **Problem**: Container fails to build or start
-**Solution**: 
+**Solution**:
 ```bash
 # Rebuild the container without cache
 # In VS Code Command Palette: "Dev Containers: Rebuild Container"

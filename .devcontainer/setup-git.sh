@@ -5,23 +5,30 @@
 
 echo "🔧 Setting up Git configuration..."
 
+# Check for .env file in workspace and source it if it exists
+if [ -f "/workspace/.env" ]; then
+    echo "📋 Loading configuration from .env file..."
+    export $(cat /workspace/.env | grep -v '^#' | xargs)
+fi
+
 # Check if we should use host git config
 if [ "${MOUNT_HOST_GIT_CONFIG}" = "true" ]; then
     echo "📂 Using host git configuration..."
     
-    # Create symlinks to host config if they exist
+    # Copy host gitconfig (so VS Code can add its credential helper)
     if [ -f "/home/node/.gitconfig.host" ]; then
-        ln -sf /home/node/.gitconfig.host /home/node/.gitconfig
-        echo "✅ Linked host .gitconfig"
+        cp /home/node/.gitconfig.host /home/node/.gitconfig
+        echo "✅ Copied host .gitconfig (writable copy for VS Code)"
     else
         echo "⚠️  Host .gitconfig not found"
     fi
     
+    # Symlink SSH directory (read-only is fine for SSH keys)
     if [ -d "/home/node/.ssh-host" ]; then
         # Remove existing .ssh if it exists
         rm -rf /home/node/.ssh
         ln -sf /home/node/.ssh-host /home/node/.ssh
-        echo "✅ Linked host .ssh directory"
+        echo "✅ Linked host .ssh directory (read-only)"
     else
         echo "⚠️  Host .ssh directory not found"
     fi
@@ -62,17 +69,31 @@ else
 fi
 
 # Configure git to use delta for better diffs (already installed)
-# Only set if not already configured
+# Only set if not already configured and not using read-only host config
 if [ "$(git config --global core.pager)" != "delta" ]; then
-    echo "📝 Configuring delta for enhanced git diffs..."
-    git config --global core.pager delta
-    git config --global interactive.diffFilter "delta --color-only"
-    git config --global delta.navigate true
-    git config --global delta.light false
-    git config --global delta.side-by-side false
-    git config --global merge.conflictstyle diff3
-    git config --global diff.colorMoved default
-    echo "✅ Delta configured for git diffs"
+    if [ "${MOUNT_HOST_GIT_CONFIG}" = "true" ]; then
+        echo "ℹ️  Using host git configuration (read-only)"
+        echo "   Delta is installed in the container but not configured."
+        echo "   To use delta on your host, install it first:"
+        echo "     brew install git-delta  # macOS with Homebrew"
+        echo "   Then add to your host's .gitconfig:"
+        echo "     [core]"
+        echo "         pager = delta"
+        echo "     [interactive]"
+        echo "         diffFilter = delta --color-only"
+    else
+        echo "📝 Configuring delta for enhanced git diffs..."
+        git config --global core.pager delta
+        git config --global interactive.diffFilter "delta --color-only"
+        git config --global delta.navigate true
+        git config --global delta.light false
+        git config --global delta.side-by-side false
+        git config --global merge.conflictstyle diff3
+        git config --global diff.colorMoved default
+        echo "✅ Delta configured for git diffs"
+    fi
+else
+    echo "✅ Delta already configured"
 fi
 
 # Check SSH keys

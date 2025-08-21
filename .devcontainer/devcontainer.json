@@ -3,7 +3,7 @@
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
-      "TZ": "${localEnv:TZ:America/Los_Angeles}",
+      "TZ": "${localEnv:TZ:UTC}",
       "CLAUDE_CODE_VERSION": "latest",
       "GIT_DELTA_VERSION": "0.18.2",
       "ZSH_IN_DOCKER_VERSION": "1.2.0"
@@ -50,8 +50,7 @@
   ],
   "containerEnv": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
-    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
-    "MOUNT_HOST_GIT_CONFIG": "${localEnv:MOUNT_HOST_GIT_CONFIG:false}"
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude"
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",

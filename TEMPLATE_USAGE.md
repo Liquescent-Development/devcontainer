@@ -67,10 +67,12 @@ Edit `.devcontainer/devcontainer.json`:
 ```
 
 ### 7. Customize the oh-my-posh Theme
-Modify `liquescent.omp.json` or create your own theme file and update the Dockerfile:
+Modify `.devcontainer/liquescent.omp.json` or create your own theme file and update the Dockerfile:
 ```bash
-# Point to your custom theme
-echo 'eval "$(oh-my-posh init zsh --config /workspace/your-theme.omp.json)"' >> ~/.zshrc
+# Copy your theme in Dockerfile
+COPY your-theme.omp.json /usr/local/share/
+# Then update the zshrc configuration to point to it
+echo 'eval "$(oh-my-posh init zsh --config /usr/local/share/your-theme.omp.json)"' >> ~/.zshrc
 ```
 
 ### 8. Add Database or Service Containers

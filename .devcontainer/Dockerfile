@@ -73,8 +73,16 @@ ENV PATH="${GOPATH}/bin:${PATH}"
 # Install Rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
 ENV PATH="/root/.cargo/bin:${PATH}"
-# Install common Rust tools
-RUN /root/.cargo/bin/cargo install cargo-watch cargo-edit cargo-audit cargo-outdated
+
+# Install cargo-binstall for faster binary installation
+RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+# Install common Rust tools using pre-built binaries
+RUN /root/.cargo/bin/cargo binstall --no-confirm \
+    cargo-watch \
+    cargo-edit \
+    cargo-audit \
+    cargo-outdated
 
 # Install .NET SDK
 ARG DOTNET_VERSION=8.0
@@ -104,13 +112,16 @@ RUN pip3 install --no-cache-dir --break-system-packages \
   requests \
   ipython
 
+# Fix Rust permissions for node user (do this as root before switching)
+RUN mv /root/.cargo /home/node/.cargo && \
+  mv /root/.rustup /home/node/.rustup && \
+  chown -R node:node /home/node/.cargo /home/node/.rustup
+
+# Install oh-my-posh as root
+RUN curl -fsSL https://ohmyposh.dev/install.sh | bash -s -- -d /usr/local/bin
+
 # Set up non-root user
 USER node
-
-# Fix Rust permissions for node user
-RUN sudo mv /root/.cargo /home/node/.cargo && \
-  sudo mv /root/.rustup /home/node/.rustup && \
-  sudo chown -R node:node /home/node/.cargo /home/node/.rustup
 ENV PATH="/home/node/.cargo/bin:${PATH}"
 
 # Install global packages
@@ -121,18 +132,15 @@ ENV PATH=$PATH:/usr/local/share/npm-global/bin
 ENV SHELL=/bin/zsh
 
 # Set the default editor and visual
-ENV EDITOR vim
-ENV VISUAL vim
+ENV EDITOR=vim
+ENV VISUAL=vim
 
-# Install oh-my-zsh
+# Install oh-my-zsh as node user
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
     # Install zsh-autosuggestions plugin
     git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
     # Install zsh-syntax-highlighting plugin
     git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-
-# Install oh-my-posh
-RUN curl -fsSL https://ohmyposh.dev/install.sh | bash -s -- -d /usr/local/bin
 
 # Create .zshrc configuration
 RUN echo '# Path to oh-my-zsh installation' > ~/.zshrc && \
@@ -186,7 +194,7 @@ RUN echo '# Path to oh-my-zsh installation' > ~/.zshrc && \
     echo "alias ga='git add'" >> ~/.zshrc && \
     echo '' >> ~/.zshrc && \
     echo '# Oh-My-Posh prompt' >> ~/.zshrc && \
-    echo 'eval "$(oh-my-posh init zsh --config /workspace/liquescent.omp.json)"' >> ~/.zshrc && \
+    echo 'eval "$(oh-my-posh init zsh --config /usr/local/share/liquescent.omp.json)"' >> ~/.zshrc && \
     echo '' >> ~/.zshrc && \
     echo '# Node.js memory' >> ~/.zshrc && \
     echo 'export NODE_OPTIONS="--max-old-space-size=4096"' >> ~/.zshrc && \
@@ -199,14 +207,16 @@ RUN echo '# Path to oh-my-zsh installation' > ~/.zshrc && \
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 
-# Copy and set up scripts
+# Copy and set up scripts and theme
 COPY init-firewall.sh /usr/local/bin/
 COPY setup-git.sh /usr/local/bin/
 COPY create-limited-git-setup.sh /usr/local/bin/
+COPY liquescent.omp.json /usr/local/share/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   chmod +x /usr/local/bin/setup-git.sh && \
   chmod +x /usr/local/bin/create-limited-git-setup.sh && \
+  chmod 644 /usr/local/share/liquescent.omp.json && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node
