@@ -63,7 +63,8 @@ To use this devcontainer template, you'll need:
 - **oh-my-zsh** with language-specific plugins (git, fzf, npm, docker, golang, rust, python, dotnet)
 - **oh-my-posh** with custom liquescent theme
 - **fzf** for fuzzy finding and enhanced command-line experience
-- Persistent bash/zsh history across container rebuilds
+- **direnv** automatically loads `.env` files when you enter the workspace
+- Persistent history for both bash and zsh across container rebuilds
 - Pre-configured PATH for all development languages
 
 ### Network Security
@@ -76,6 +77,7 @@ To use this devcontainer template, you'll need:
 - **Claude Code CLI** for AI-assisted development
 - **Git Delta** for enhanced git diff visualization
 - **GitHub CLI** for repository management
+- **direnv** for automatic environment variable loading from `.env` files
 - **Node.js 20** with npm global package support
 - **Go 1.25.0** with GOPATH configured and module support
 - **Rust (latest stable)** with cargo and common tools (cargo-watch, cargo-edit, cargo-audit, cargo-outdated)
@@ -131,6 +133,7 @@ The `.env.example` file shows all available configuration options:
   - `MOUNT_HOST_GIT_CONFIG`: Set to `true` to use host git config (default: `false`)
   - `TZ`: Set your timezone, e.g., `America/Phoenix` (default: `UTC`)
 - **Git ignored**: The `.env` file is already in `.gitignore`
+- **Auto-loading**: Environment variables from `.env` are automatically loaded by direnv when you enter the workspace
 
 **Note on Timezone**: The TZ setting in `.env` only affects the running container. To set timezone during build, export TZ in your shell before opening VS Code:
 ```bash
@@ -441,7 +444,7 @@ npm install -g @anthropic-ai/claude-code@latest
 ## Development Tips
 
 ### Persistent Data
-- Bash history is persisted across container rebuilds
+- Shell history (both bash and zsh) is persisted across container rebuilds
 - Claude configuration is mounted from host `~/.claude` directory
 - Workspace files are bind-mounted for real-time editing
 

@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
   pkg-config \
   libssl-dev \
+  direnv \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Ensure default node user has access to /usr/local/share
@@ -39,11 +40,14 @@ RUN mkdir -p /usr/local/share/npm-global && \
 
 ARG USERNAME=node
 
-# Persist bash history.
+# Persist bash and zsh history, configure direnv for bash
 RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   && mkdir /commandhistory \
   && touch /commandhistory/.bash_history \
-  && chown -R $USERNAME /commandhistory
+  && touch /commandhistory/.zsh_history \
+  && chown -R $USERNAME /commandhistory \
+  && echo "$SNIPPET" >> /home/$USERNAME/.bashrc \
+  && echo 'eval "$(direnv hook bash)"' >> /home/$USERNAME/.bashrc
 
 # Set `DEVCONTAINER` environment variable to help with orientation
 ENV DEVCONTAINER=true
@@ -201,6 +205,9 @@ RUN echo '# Path to oh-my-zsh installation' > ~/.zshrc && \
     echo '' >> ~/.zshrc && \
     echo '# Editor' >> ~/.zshrc && \
     echo 'export EDITOR=vim' >> ~/.zshrc && \
+    echo '' >> ~/.zshrc && \
+    echo '# direnv - automatically load .env files' >> ~/.zshrc && \
+    echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc && \
     echo 'export VISUAL=vim' >> ~/.zshrc
 
 # Install Claude
@@ -211,11 +218,13 @@ RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 COPY init-firewall.sh /usr/local/bin/
 COPY setup-git.sh /usr/local/bin/
 COPY create-limited-git-setup.sh /usr/local/bin/
+COPY setup-direnv.sh /usr/local/bin/
 COPY liquescent.omp.json /usr/local/share/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   chmod +x /usr/local/bin/setup-git.sh && \
   chmod +x /usr/local/bin/create-limited-git-setup.sh && \
+  chmod +x /usr/local/bin/setup-direnv.sh && \
   chmod 644 /usr/local/share/liquescent.omp.json && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall

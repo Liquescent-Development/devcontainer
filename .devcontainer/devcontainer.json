@@ -42,7 +42,7 @@
   },
   "remoteUser": "node",
   "mounts": [
-    "source=claude-code-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
+    "source=devcontainer-history-${devcontainerId},target=/commandhistory,type=volume",
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
     "source=${localEnv:HOME}/Library/Fonts,target=/usr/share/fonts/truetype/custom,type=bind,readonly",
     "source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig.host,type=bind,readonly",
@@ -54,5 +54,5 @@
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "sudo /usr/local/bin/init-firewall.sh && /usr/local/bin/setup-git.sh"
+  "postCreateCommand": "sudo /usr/local/bin/init-firewall.sh && /usr/local/bin/setup-git.sh && /usr/local/bin/setup-direnv.sh"
 }
