@@ -28,6 +28,9 @@ node_modules/
 .env.local
 .env.*.local
 
+# User-specific allowed domains configuration
+allowed-domains.txt
+
 # Build outputs
 dist/
 build/

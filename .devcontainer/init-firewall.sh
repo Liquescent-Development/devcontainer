@@ -52,7 +52,7 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Resolve and add other allowed domains
+# Resolve and add built-in allowed domains
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
@@ -75,6 +75,42 @@ for domain in \
         ipset add allowed-domains "$ip"
     done < <(echo "$ips")
 done
+
+# Process user-defined allowed domains and IPs from allowed-domains.txt
+if [ -f "/workspace/allowed-domains.txt" ]; then
+    echo "Processing user-defined allowed domains and IPs..."
+    while IFS= read -r line; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${line// }" ]] && continue
+        
+        # Trim whitespace
+        entry=$(echo "$line" | xargs)
+        
+        # Check if it's a CIDR range or single IP
+        if [[ "$entry" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(/[0-9]{1,2})?$ ]]; then
+            echo "Adding IP/CIDR: $entry"
+            ipset add allowed-domains "$entry" 2>/dev/null || echo "  Already exists or invalid: $entry"
+        else
+            # It's a domain name, resolve it
+            echo "Resolving custom domain: $entry"
+            ips=$(dig +noall +answer A "$entry" | awk '$4 == "A" {print $5}')
+            if [ -z "$ips" ]; then
+                echo "  Warning: Failed to resolve $entry (skipping)"
+            else
+                while read -r ip; do
+                    if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+                        echo "  Adding $ip for $entry"
+                        ipset add allowed-domains "$ip" 2>/dev/null || echo "    Already exists: $ip"
+                    fi
+                done < <(echo "$ips")
+            fi
+        fi
+    done < "/workspace/allowed-domains.txt"
+    echo "Finished processing user-defined allowed domains"
+else
+    echo "No custom allowed-domains.txt file found (optional)"
+fi
 
 # Get host IP from default route
 HOST_IP=$(ip route | grep default | cut -d" " -f3)

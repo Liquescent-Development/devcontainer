@@ -206,6 +206,7 @@ The devcontainer implements a restrictive network security model:
 - **GitHub** (dynamically fetched IP ranges for web, API, and git operations)
 - **npm registry** (registry.npmjs.org)
 - **Anthropic APIs** (api.anthropic.com, statsig.anthropic.com, statsig.com, sentry.io)
+- **Custom domains/IPs** (configurable via `allowed-domains.txt`)
 - **Host machine ports** (specific ports only):
   - Proxy: 1080 (SOCKS5)
   - Web: 80, 443, 8080, 8443
@@ -287,18 +288,39 @@ npm config delete https-proxy
 
 ## Customization Options
 
-### Adding New Allowed Domains
+### Adding Custom Allowed Domains and IPs
 
-Edit `.devcontainer/init-firewall.sh` and add domains to the resolution loop:
+You can add custom allowed domains and IP ranges without modifying the devcontainer files:
 
-```bash
-for domain in \
-    "registry.npmjs.org" \
-    "api.anthropic.com" \
-    "your-new-domain.com"; do  # Add your domain here
-    # ... rest of the loop
-done
-```
+1. **Copy the example file**:
+   ```bash
+   cp allowed-domains.example allowed-domains.txt
+   ```
+
+2. **Edit `allowed-domains.txt`** to add your custom entries:
+   ```bash
+   # AWS Bedrock endpoints
+   bedrock.us-east-1.amazonaws.com
+   bedrock-runtime.us-west-2.amazonaws.com
+   
+   # Custom API endpoints
+   api.mycompany.com
+   
+   # IP ranges (CIDR notation)
+   10.0.0.0/8
+   
+   # Individual IPs
+   203.0.113.42
+   ```
+
+3. **Rebuild the container** to apply changes
+
+The firewall script will:
+- Resolve domain names to their current IPs
+- Add CIDR ranges directly to the allowlist
+- Process individual IPs
+- Skip comments and empty lines
+- Continue processing even if some domains fail to resolve
 
 ### Modifying Shell Configuration
 
