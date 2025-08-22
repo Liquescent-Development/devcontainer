@@ -76,9 +76,41 @@ for domain in \
     done < <(echo "$ips")
 done
 
-# Process user-defined allowed domains and IPs from allowed-domains.txt
+# Process environment variable domains first (user/machine specific from .env)
+if [ -n "$CUSTOM_ALLOWED_DOMAINS" ]; then
+    echo "Processing user-specific allowed domains from CUSTOM_ALLOWED_DOMAINS environment variable..."
+    IFS=',' read -ra DOMAINS <<< "$CUSTOM_ALLOWED_DOMAINS"
+    for domain in "${DOMAINS[@]}"; do
+        # Trim whitespace
+        domain=$(echo "$domain" | xargs)
+        if [ -n "$domain" ]; then
+            # Check if it's a CIDR range or single IP
+            if [[ "$domain" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(/[0-9]{1,2})?$ ]]; then
+                echo "Adding IP/CIDR from env: $domain"
+                ipset add allowed-domains "$domain" 2>/dev/null || echo "  Already exists or invalid: $domain"
+            else
+                # It's a domain name, resolve it
+                echo "Resolving domain from env: $domain"
+                ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
+                if [ -z "$ips" ]; then
+                    echo "  Warning: Failed to resolve $domain (may retry later)"
+                else
+                    while read -r ip; do
+                        if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+                            echo "  Adding $ip for $domain"
+                            ipset add allowed-domains "$ip" 2>/dev/null || echo "    Already exists: $ip"
+                        fi
+                    done < <(echo "$ips")
+                fi
+            fi
+        fi
+    done
+    echo "Finished processing environment variable domains"
+fi
+
+# Process project-specific allowed domains file (committed to repo)
 if [ -f "/workspace/allowed-domains.txt" ]; then
-    echo "Processing user-defined allowed domains and IPs..."
+    echo "Processing project-specific allowed domains from allowed-domains.txt..."
     while IFS= read -r line; do
         # Skip comments and empty lines
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
@@ -89,11 +121,11 @@ if [ -f "/workspace/allowed-domains.txt" ]; then
         
         # Check if it's a CIDR range or single IP
         if [[ "$entry" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(/[0-9]{1,2})?$ ]]; then
-            echo "Adding IP/CIDR: $entry"
+            echo "Adding IP/CIDR from file: $entry"
             ipset add allowed-domains "$entry" 2>/dev/null || echo "  Already exists or invalid: $entry"
         else
             # It's a domain name, resolve it
-            echo "Resolving custom domain: $entry"
+            echo "Resolving domain from file: $entry"
             ips=$(dig +noall +answer A "$entry" | awk '$4 == "A" {print $5}')
             if [ -z "$ips" ]; then
                 echo "  Warning: Failed to resolve $entry (skipping)"
@@ -107,9 +139,9 @@ if [ -f "/workspace/allowed-domains.txt" ]; then
             fi
         fi
     done < "/workspace/allowed-domains.txt"
-    echo "Finished processing user-defined allowed domains"
+    echo "Finished processing project-specific allowed domains"
 else
-    echo "No custom allowed-domains.txt file found (optional)"
+    echo "No project allowed-domains.txt file found (optional)"
 fi
 
 # Get host IP from default route

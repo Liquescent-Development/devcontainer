@@ -4,17 +4,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a development container configuration designed to provide a complete polyglot development environment for Claude Code. The container supports Node.js, Go, Rust, .NET, and Python development with network isolation and specific allowlisted domains for security purposes.
+This is the Liquescent Development DevContainer configuration - a secure, polyglot development environment with network isolation and comprehensive tooling support. The container supports Node.js, Go, Rust, .NET, and Python development with network isolation and specific allowlisted domains for security purposes.
 
 ## Architecture
+
+### Authentication & Secrets Management
+
+The devcontainer uses a dual approach for 1Password integration:
+
+1. **SSH Operations (Git/Commit Signing)**: Uses SSH agent forwarding from the host
+   - Automatically detects and forwards the host's SSH agent (including 1Password SSH agent)
+   - No additional authentication needed in the container
+   - Handles both repository access and commit signing
+
+2. **Environment Variables/Secrets**: Uses 1Password CLI with Service Accounts
+   - **Primary (Auto-creation)**: Set `OP_CREATE_SERVICE_ACCOUNT=true` to auto-generate a token
+     - Requires 1Password CLI on host and being signed in
+     - Configure with: `OP_SA_EXPIRES_IN`, `OP_SA_VAULTS`, `OP_SA_NAME`
+     - Token is created at container startup and saved for the container's lifetime
+   - **Manual Service Account**: Set `OP_SERVICE_ACCOUNT_TOKEN` directly
+   - **Connect Server (for larger teams)**: Use `OP_CONNECT_HOST` and `OP_CONNECT_TOKEN`
+   - Use `op run --env-file` to inject secrets into applications
+   - Example: `op run --env-file=prod.env -- python app.py`
 
 ### Core Components
 
 1. **DevContainer Configuration** (`.devcontainer/devcontainer.json`)
    - Configures a complete polyglot development environment
+   - Uses `containerEnv` for static configuration (NODE_OPTIONS, paths)
+   - Uses `remoteEnv` for runtime configuration (1Password tokens, custom domains)
+   - Parallel execution of setup scripts via `postCreateCommand` object
    - Mounts Claude configuration directory and bash history
    - Installs VS Code extensions for JavaScript/TypeScript development
-   - Runs firewall initialization on container creation
 
 2. **Dockerfile** (`.devcontainer/Dockerfile`)
    - Base image: Node.js 20 with multi-language support

@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   man-db \
   unzip \
   gnupg2 \
-  gh \
+  # Note: GitHub CLI now installed via ghcr.io/devcontainers/features/github-cli:1
   iptables \
   ipset \
   iproute2 \
@@ -31,9 +31,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
   pkg-config \
   libssl-dev \
-  direnv \
+  # Note: direnv now installed via ghcr.io/devcontainers-community/features/direnv:1
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Note: 1Password CLI is now installed via Dev Container Feature:
+# ghcr.io/itsmechlark/features/1password:1
 
 # Ensure default node user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
@@ -65,62 +67,19 @@ RUN ARCH=$(dpkg --print-architecture) && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
-# Install Go
-ARG GO_VERSION=1.25.0
-RUN ARCH=$(dpkg --print-architecture) && \
-  wget "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" && \
-  sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-${ARCH}.tar.gz" && \
-  rm "go${GO_VERSION}.linux-${ARCH}.tar.gz"
-ENV PATH="/usr/local/go/bin:${PATH}"
-ENV GOPATH="/home/node/go"
-ENV PATH="${GOPATH}/bin:${PATH}"
+# Note: Go is now installed via Dev Container Feature:
+# ghcr.io/devcontainers/features/go:1
 
-# Install Rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
-ENV PATH="/root/.cargo/bin:${PATH}"
+# Note: Rust is now installed via Dev Container Feature:
+# ghcr.io/devcontainers/features/rust:1
 
-# Install cargo-binstall for faster binary installation
-RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+# Note: .NET SDK is now installed via Dev Container Feature:
+# ghcr.io/devcontainers/features/dotnet:2
 
-# Install common Rust tools using pre-built binaries
-RUN /root/.cargo/bin/cargo binstall --no-confirm \
-    cargo-watch \
-    cargo-edit \
-    cargo-audit \
-    cargo-outdated
+# Note: Python is now installed via Dev Container Feature:
+# ghcr.io/devcontainers/features/python:1
 
-# Install .NET SDK
-ARG DOTNET_VERSION=8.0
-RUN wget https://dot.net/v1/dotnet-install.sh && \
-  chmod +x dotnet-install.sh && \
-  ./dotnet-install.sh --channel ${DOTNET_VERSION} --install-dir /usr/local/dotnet && \
-  rm dotnet-install.sh
-ENV PATH="/usr/local/dotnet:${PATH}"
-ENV DOTNET_ROOT="/usr/local/dotnet"
-ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
-
-# Install Python and common tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  python3 \
-  python3-pip \
-  python3-venv \
-  python3-dev \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install common Python tools
-RUN pip3 install --no-cache-dir --break-system-packages \
-  pipenv \
-  poetry \
-  black \
-  pylint \
-  pytest \
-  requests \
-  ipython
-
-# Fix Rust permissions for node user (do this as root before switching)
-RUN mv /root/.cargo /home/node/.cargo && \
-  mv /root/.rustup /home/node/.rustup && \
-  chown -R node:node /home/node/.cargo /home/node/.rustup
+# Note: Rust permissions are handled by the Dev Container Feature
 
 # Install oh-my-posh as root
 RUN curl -fsSL https://ohmyposh.dev/install.sh | bash -s -- -d /usr/local/bin
@@ -167,12 +126,7 @@ RUN echo '# Path to oh-my-zsh installation' > ~/.zshrc && \
     echo '' >> ~/.zshrc && \
     echo '# User configuration' >> ~/.zshrc && \
     echo 'export PATH="$PATH:/usr/local/share/npm-global/bin"' >> ~/.zshrc && \
-    echo 'export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"' >> ~/.zshrc && \
-    echo 'export PATH="$PATH:$HOME/.cargo/bin"' >> ~/.zshrc && \
-    echo 'export PATH="$PATH:/usr/local/dotnet"' >> ~/.zshrc && \
-    echo 'export GOPATH="$HOME/go"' >> ~/.zshrc && \
-    echo 'export DOTNET_ROOT="/usr/local/dotnet"' >> ~/.zshrc && \
-    echo 'export DOTNET_CLI_TELEMETRY_OPTOUT=1' >> ~/.zshrc && \
+    echo '# Language paths are configured by Dev Container Features' >> ~/.zshrc && \
     echo '' >> ~/.zshrc && \
     echo '# FZF configuration' >> ~/.zshrc && \
     echo 'source /usr/share/doc/fzf/examples/key-bindings.zsh' >> ~/.zshrc && \
@@ -218,16 +172,16 @@ RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} && \
 
 
 # Copy and set up scripts and theme
-COPY init-firewall.sh /usr/local/bin/
-COPY setup-git.sh /usr/local/bin/
-COPY create-limited-git-setup.sh /usr/local/bin/
-COPY setup-direnv.sh /usr/local/bin/
-COPY liquescent.omp.json /usr/local/share/
+COPY scripts/init-firewall.sh /usr/local/bin/
+COPY scripts/setup-git.sh /usr/local/bin/
+COPY scripts/create-limited-git-setup.sh /usr/local/bin/
+COPY scripts/setup-1password.sh /usr/local/bin/
+COPY scripts/liquescent.omp.json /usr/local/share/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   chmod +x /usr/local/bin/setup-git.sh && \
   chmod +x /usr/local/bin/create-limited-git-setup.sh && \
-  chmod +x /usr/local/bin/setup-direnv.sh && \
+  chmod +x /usr/local/bin/setup-1password.sh && \
   chmod 644 /usr/local/share/liquescent.omp.json && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
