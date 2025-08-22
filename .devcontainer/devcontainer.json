@@ -1,13 +1,9 @@
 {
   "name": "Liquescent Development Environment",
-  // Use pre-built image from GitHub Container Registry
-  // To build locally: cd docker-image && ./build.sh
-  "image": "ghcr.io/liquescent-development/devcontainer:latest",
-  "runArgs": [
-    "--cap-add=NET_ADMIN",
-    "--cap-add=NET_RAW",
-    "--add-host=host.docker.internal:host-gateway"
-  ],
+  // Uses Docker Compose to load .env file automatically
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -59,44 +55,6 @@
   "remoteUser": "node",
   "userEnvProbe": "loginInteractiveShell",
   "updateRemoteUserUID": true,
-  "secrets": {
-    "OP_SERVICE_ACCOUNT_TOKEN": {
-      "description": "1Password Service Account token for secure environment variable management",
-      "documentationUrl": "https://developer.1password.com/docs/service-accounts/"
-    },
-    "OP_CONNECT_TOKEN": {
-      "description": "1Password Connect Server token (alternative to service account)",
-      "documentationUrl": "https://developer.1password.com/docs/connect/"
-    }
-  },
-  "mounts": [
-    "source=devcontainer-history-${devcontainerId},target=/commandhistory,type=volume",
-    "source=${localEnv:HOME}/.claude/agents,target=/home/node/.claude/agents,type=bind,readonly",
-    "source=${localEnv:HOME}/.claude/CLAUDE.md,target=/home/node/.claude/CLAUDE.md,type=bind,readonly",
-    "source=${localEnv:HOME}/.claude/settings.json,target=/home/node/.claude/settings.json,type=bind,readonly",
-    "source=${localEnv:HOME}/Library/Fonts,target=/usr/share/fonts/truetype/custom,type=bind,readonly",
-    "source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig.host,type=bind,readonly",
-    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh-host,type=bind,readonly",
-    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind"
-  ],
-  "containerEnv": {
-    "NODE_OPTIONS": "--max-old-space-size=4096",
-    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
-    "SSH_AUTH_SOCK": "/ssh-agent"
-  },
-  "remoteEnv": {
-    "OP_SERVICE_ACCOUNT_TOKEN": "${localEnv:OP_SERVICE_ACCOUNT_TOKEN}",
-    "OP_CREATE_SERVICE_ACCOUNT": "${localEnv:OP_CREATE_SERVICE_ACCOUNT}",
-    "OP_SA_EXPIRES_IN": "${localEnv:OP_SA_EXPIRES_IN}",
-    "OP_SA_VAULTS": "${localEnv:OP_SA_VAULTS}",
-    "OP_SA_NAME": "${localEnv:OP_SA_NAME}",
-    "OP_CONNECT_HOST": "${localEnv:OP_CONNECT_HOST}",
-    "OP_CONNECT_TOKEN": "${localEnv:OP_CONNECT_TOKEN}",
-    "CUSTOM_ALLOWED_DOMAINS": "${localEnv:CUSTOM_ALLOWED_DOMAINS}",
-    "MOUNT_HOST_GIT_CONFIG": "${localEnv:MOUNT_HOST_GIT_CONFIG}"
-  },
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
-  "workspaceFolder": "/workspace",
   "hostRequirements": {
     "cpus": 2,
     "memory": "4gb",

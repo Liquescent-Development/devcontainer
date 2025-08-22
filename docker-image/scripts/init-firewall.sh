@@ -76,10 +76,10 @@ for domain in \
     done < <(echo "$ips")
 done
 
-# Process environment variable domains first (user/machine specific from .env)
-if [ -n "$CUSTOM_ALLOWED_DOMAINS" ]; then
-    echo "Processing user-specific allowed domains from CUSTOM_ALLOWED_DOMAINS environment variable..."
-    IFS=',' read -ra DOMAINS <<< "$CUSTOM_ALLOWED_DOMAINS"
+# Process environment variable domains (from .env file via Docker Compose)
+if [ -n "${CUSTOM_ALLOWED_DOMAINS:-}" ]; then
+    echo "Processing custom allowed domains from CUSTOM_ALLOWED_DOMAINS environment variable..."
+    IFS=',' read -ra DOMAINS <<< "${CUSTOM_ALLOWED_DOMAINS:-}"
     for domain in "${DOMAINS[@]}"; do
         # Trim whitespace
         domain=$(echo "$domain" | xargs)
@@ -109,7 +109,7 @@ if [ -n "$CUSTOM_ALLOWED_DOMAINS" ]; then
 fi
 
 # Process project-specific allowed domains file (committed to repo)
-if [ -f "/workspace/allowed-domains.txt" ]; then
+if [ -f "/workspace/.devcontainer/allowed-domains.txt" ]; then
     echo "Processing project-specific allowed domains from allowed-domains.txt..."
     while IFS= read -r line; do
         # Skip comments and empty lines
@@ -138,10 +138,10 @@ if [ -f "/workspace/allowed-domains.txt" ]; then
                 done < <(echo "$ips")
             fi
         fi
-    done < "/workspace/allowed-domains.txt"
+    done < "/workspace/.devcontainer/allowed-domains.txt"
     echo "Finished processing project-specific allowed domains"
 else
-    echo "No project allowed-domains.txt file found (optional)"
+    echo "No .devcontainer/allowed-domains.txt file found (optional)"
 fi
 
 # Get host IP from default route
@@ -179,6 +179,34 @@ iptables -A INPUT -p tcp --sport 53 -j ACCEPT
 # Allow outbound SSH
 iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
 
+# SOCKS5 proxy configuration
+if [ "${SOCKS5_ENABLED:-true}" = "true" ]; then
+    SOCKS5_HOST="${SOCKS5_HOST:-host.docker.internal}"
+    SOCKS5_PORT="${SOCKS5_PORT:-1080}"
+    
+    echo "Configuring SOCKS5 proxy access:"
+    echo "  Host: $SOCKS5_HOST"
+    echo "  Port: $SOCKS5_PORT"
+    
+    # Resolve SOCKS5 host if it's a hostname
+    if [[ "$SOCKS5_HOST" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        # It's already an IP
+        SOCKS5_IP="$SOCKS5_HOST"
+        iptables -A OUTPUT -p tcp -d "$SOCKS5_IP" --dport "$SOCKS5_PORT" -j ACCEPT
+    else
+        # It's a hostname, resolve it
+        SOCKS5_IP=$(getent hosts "$SOCKS5_HOST" | awk '{print $1}')
+        if [ -z "$SOCKS5_IP" ]; then
+            echo "  Warning: Failed to resolve SOCKS5 host $SOCKS5_HOST"
+        else
+            echo "  Resolved to: $SOCKS5_IP"
+            iptables -A OUTPUT -p tcp -d "$SOCKS5_IP" --dport "$SOCKS5_PORT" -j ACCEPT
+        fi
+    fi
+else
+    echo "SOCKS5 proxy access disabled"
+fi
+
 # Allow specific ports to host machine for common development services
 # Function to add rules for both IPs
 add_host_port_rule() {
@@ -189,9 +217,6 @@ add_host_port_rule() {
         iptables -A OUTPUT -p tcp -d "$HOST_DOCKER_IP" --dport "$port" -j ACCEPT
     fi
 }
-
-# SOCKS5 proxy
-add_host_port_rule 1080 "SOCKS5 proxy"
 # HTTP
 add_host_port_rule 80 "HTTP"
 add_host_port_rule 8080 "HTTP alt"
