@@ -76,10 +76,10 @@ for domain in \
     done < <(echo "$ips")
 done
 
-# Process environment variable domains first (user/machine specific from .env)
+# Process environment variable domains (from .env file via Docker Compose)
 if [ -n "${CUSTOM_ALLOWED_DOMAINS:-}" ]; then
-    echo "Processing user-specific allowed domains from CUSTOM_ALLOWED_DOMAINS environment variable..."
-    IFS=',' read -ra DOMAINS <<< "$CUSTOM_ALLOWED_DOMAINS"
+    echo "Processing custom allowed domains from CUSTOM_ALLOWED_DOMAINS environment variable..."
+    IFS=',' read -ra DOMAINS <<< "${CUSTOM_ALLOWED_DOMAINS:-}"
     for domain in "${DOMAINS[@]}"; do
         # Trim whitespace
         domain=$(echo "$domain" | xargs)

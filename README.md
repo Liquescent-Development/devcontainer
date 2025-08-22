@@ -42,8 +42,8 @@ A secure, polyglot development container with network isolation, comprehensive l
 
 2. **Configure your environment**:
    ```bash
-   cp .env.example .env
-   # Edit .env with your settings
+   cp .devcontainer/.env.example .devcontainer/.env
+   # Edit .devcontainer/.env with your settings
    ```
 
 3. **Open in VS Code**:
@@ -58,7 +58,9 @@ The container will automatically pull from `ghcr.io/liquescent-development/devco
 
 ### Environment Variables
 
-Key configuration options in `.env`:
+The devcontainer uses Docker Compose to automatically load environment variables from `.devcontainer/.env`.
+
+Key configuration options in `.devcontainer/.env`:
 
 ```bash
 # Timezone
@@ -91,11 +93,12 @@ By default, only these domains are accessible:
 
 **Method 1: Environment Variable** (personal/temporary)
 ```bash
-# In .env
+# In .devcontainer/.env
 CUSTOM_ALLOWED_DOMAINS=api.example.com,db.internal.net
 ```
 
 **Method 2: Project Configuration** (team/permanent)
+Create an `allowed-domains.txt` file in your project root:
 ```bash
 # In allowed-domains.txt (project root)
 api.example.com

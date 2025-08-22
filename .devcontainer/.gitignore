@@ -1,0 +1,5 @@
+# Environment file with personal settings
+.env
+
+# But keep the example
+!.env.example
