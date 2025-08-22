@@ -110,27 +110,43 @@ staging.example.com
 
 #### 1Password Integration
 
-**Option 1: Service Account** (Recommended)
+The 1Password CLI is pre-installed but requires authentication configuration.
+
+**Option 1: Service Account** (Recommended for DevContainers)
+
+Service accounts provide secure, non-interactive authentication perfect for development containers.
+
 ```bash
-# Create on host
-op service-account create devcontainer --expires-in 30d
-# Add token to .env
-OP_SERVICE_ACCOUNT_TOKEN=ops_...
+# On your host machine:
+# 1. Install 1Password CLI: https://developer.1password.com/docs/cli/get-started
+# 2. Sign in: op signin
+# 3. Create a service account:
+op service-account create "devcontainer-$(basename $(pwd))" --expires-in 30d
+
+# 4. Copy the token (starts with 'ops_') to .devcontainer/.env:
+OP_SERVICE_ACCOUNT_TOKEN=ops_YOUR_TOKEN_HERE
+
+# For vault-specific access (more secure):
+op service-account create "my-dev" --expires-in 30d --vault Development:read_items
 ```
 
-**Option 2: Connect Server**
+**Option 2: Connect Server** (For Teams/Enterprise)
 ```bash
+# In .devcontainer/.env:
 OP_CONNECT_HOST=https://connect.company.com
-OP_CONNECT_TOKEN=...
+OP_CONNECT_TOKEN=your-connect-token
 ```
 
 **Usage in container**:
 ```bash
-# Inject environment variables
+# Inject environment variables from 1Password
 op run --env-file=prod.env -- npm start
 
 # Read specific secrets
 export API_KEY=$(op read "op://vault/item/field")
+
+# Use with git for secure commit signing
+op plugin init git
 ```
 
 ## 🏗️ Architecture
