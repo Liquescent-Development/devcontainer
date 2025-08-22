@@ -109,7 +109,7 @@ if [ -n "${CUSTOM_ALLOWED_DOMAINS:-}" ]; then
 fi
 
 # Process project-specific allowed domains file (committed to repo)
-if [ -f "/workspace/allowed-domains.txt" ]; then
+if [ -f "/workspace/.devcontainer/allowed-domains.txt" ]; then
     echo "Processing project-specific allowed domains from allowed-domains.txt..."
     while IFS= read -r line; do
         # Skip comments and empty lines
@@ -138,10 +138,10 @@ if [ -f "/workspace/allowed-domains.txt" ]; then
                 done < <(echo "$ips")
             fi
         fi
-    done < "/workspace/allowed-domains.txt"
+    done < "/workspace/.devcontainer/allowed-domains.txt"
     echo "Finished processing project-specific allowed domains"
 else
-    echo "No project allowed-domains.txt file found (optional)"
+    echo "No .devcontainer/allowed-domains.txt file found (optional)"
 fi
 
 # Get host IP from default route

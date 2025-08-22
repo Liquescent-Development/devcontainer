@@ -98,9 +98,9 @@ CUSTOM_ALLOWED_DOMAINS=api.example.com,db.internal.net
 ```
 
 **Method 2: Project Configuration** (team/permanent)
-Create an `allowed-domains.txt` file in your project root:
+Create an `allowed-domains.txt` file in `.devcontainer/`:
 ```bash
-# In allowed-domains.txt (project root)
+# In .devcontainer/allowed-domains.txt
 api.example.com
 staging.example.com
 192.168.1.0/24
