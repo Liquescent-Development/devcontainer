@@ -159,19 +159,33 @@ export API_KEY=$(op read "op://vault/item/field")
 
 ### Using SOCKS5 Proxy
 
-Access external resources through host proxy:
+The container supports configurable SOCKS5 proxy access for routing traffic through VPNs or corporate proxies.
 
+Configuration in `.devcontainer/.env`:
+```bash
+SOCKS5_ENABLED=true                    # Enable/disable proxy access
+SOCKS5_HOST=host.docker.internal       # Proxy host (hostname or IP)
+SOCKS5_PORT=1080                        # Proxy port
+```
+
+Using the proxy in the container:
 ```bash
 # Configure git
-git config --global http.proxy socks5://host.docker.internal:1080
+git config --global http.proxy socks5://${SOCKS5_HOST}:${SOCKS5_PORT}
 
 # Use with curl
-curl --socks5 host.docker.internal:1080 https://example.com
+curl --socks5 ${SOCKS5_HOST}:${SOCKS5_PORT} https://example.com
 
 # Use with Python
-export HTTP_PROXY=socks5://host.docker.internal:1080
-export HTTPS_PROXY=socks5://host.docker.internal:1080
+export HTTP_PROXY=socks5://${SOCKS5_HOST}:${SOCKS5_PORT}
+export HTTPS_PROXY=socks5://${SOCKS5_HOST}:${SOCKS5_PORT}
 ```
+
+Common proxy scenarios:
+- **Local SSH tunnel**: `ssh -D 1080 user@jumphost` then use default settings
+- **Corporate proxy**: Set `SOCKS5_HOST` to your proxy server
+- **VPN client**: Many VPN clients provide SOCKS5 on localhost:1080
+- **Disable proxy**: Set `SOCKS5_ENABLED=false` if not needed
 
 ### Debugging Network Issues
 

@@ -179,6 +179,34 @@ iptables -A INPUT -p tcp --sport 53 -j ACCEPT
 # Allow outbound SSH
 iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
 
+# SOCKS5 proxy configuration
+if [ "${SOCKS5_ENABLED:-true}" = "true" ]; then
+    SOCKS5_HOST="${SOCKS5_HOST:-host.docker.internal}"
+    SOCKS5_PORT="${SOCKS5_PORT:-1080}"
+    
+    echo "Configuring SOCKS5 proxy access:"
+    echo "  Host: $SOCKS5_HOST"
+    echo "  Port: $SOCKS5_PORT"
+    
+    # Resolve SOCKS5 host if it's a hostname
+    if [[ "$SOCKS5_HOST" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        # It's already an IP
+        SOCKS5_IP="$SOCKS5_HOST"
+        iptables -A OUTPUT -p tcp -d "$SOCKS5_IP" --dport "$SOCKS5_PORT" -j ACCEPT
+    else
+        # It's a hostname, resolve it
+        SOCKS5_IP=$(getent hosts "$SOCKS5_HOST" | awk '{print $1}')
+        if [ -z "$SOCKS5_IP" ]; then
+            echo "  Warning: Failed to resolve SOCKS5 host $SOCKS5_HOST"
+        else
+            echo "  Resolved to: $SOCKS5_IP"
+            iptables -A OUTPUT -p tcp -d "$SOCKS5_IP" --dport "$SOCKS5_PORT" -j ACCEPT
+        fi
+    fi
+else
+    echo "SOCKS5 proxy access disabled"
+fi
+
 # Allow specific ports to host machine for common development services
 # Function to add rules for both IPs
 add_host_port_rule() {
@@ -189,9 +217,6 @@ add_host_port_rule() {
         iptables -A OUTPUT -p tcp -d "$HOST_DOCKER_IP" --dport "$port" -j ACCEPT
     fi
 }
-
-# SOCKS5 proxy
-add_host_port_rule 1080 "SOCKS5 proxy"
 # HTTP
 add_host_port_rule 80 "HTTP"
 add_host_port_rule 8080 "HTTP alt"
