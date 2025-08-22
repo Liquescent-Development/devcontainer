@@ -77,6 +77,7 @@ To use this devcontainer template, you'll need:
 - **Claude Code CLI** for AI-assisted development
 - **Git Delta** for enhanced git diff visualization
 - **GitHub CLI** for repository management
+- **1Password CLI** with commit signing support (graceful fallback in container)
 - **direnv** for automatic environment variable loading from `.env` files
 - **Node.js 20** with npm global package support
 - **Go 1.25.0** with GOPATH configured and module support
@@ -144,7 +145,17 @@ code /path/to/your/project
 Both options include:
 - **GitHub CLI**: Pre-installed and ready for authentication
 - **Git Delta**: Enhanced diff visualization
+- **1Password CLI**: For commit signing (with graceful fallback if desktop app unavailable)
 - **Configuration Verification**: Automatic validation on container start
+
+**Note on Commit Signing**: If you use 1Password for commit signing on your host, the container includes the 1Password CLI with an intelligent wrapper that will:
+- Prompt you to authenticate with `op signin` to use your existing 1Password SSH keys
+- Once authenticated, use the same SSH signing keys from your 1Password vault
+- Alternatively, guide you through setting up local SSH key signing
+- Help you create a new SSH signing key if needed
+- Provide instructions for adding keys to GitHub
+- Option to disable signing for the current repository
+The wrapper runs automatically on your first commit attempt and preserves your signing workflow
 
 ### VS Code Integration
 - Pre-configured extensions for JavaScript/TypeScript development

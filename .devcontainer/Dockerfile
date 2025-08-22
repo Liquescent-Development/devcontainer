@@ -34,6 +34,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   direnv \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install 1Password CLI
+RUN ARCH=$(dpkg --print-architecture) && \
+  curl -sSfo op.zip https://cache.agilebits.com/dist/1P/op2/pkg/v2.30.0/op_linux_${ARCH}_v2.30.0.zip && \
+  unzip -d /usr/local/bin op.zip && \
+  rm op.zip && \
+  chmod +x /usr/local/bin/op
+
 # Ensure default node user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
   chown -R node:node /usr/local/share
@@ -221,12 +228,14 @@ COPY init-firewall.sh /usr/local/bin/
 COPY setup-git.sh /usr/local/bin/
 COPY create-limited-git-setup.sh /usr/local/bin/
 COPY setup-direnv.sh /usr/local/bin/
+COPY op-ssh-sign-wrapper.sh /usr/local/bin/
 COPY liquescent.omp.json /usr/local/share/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   chmod +x /usr/local/bin/setup-git.sh && \
   chmod +x /usr/local/bin/create-limited-git-setup.sh && \
   chmod +x /usr/local/bin/setup-direnv.sh && \
+  chmod +x /usr/local/bin/op-ssh-sign-wrapper.sh && \
   chmod 644 /usr/local/share/liquescent.omp.json && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall

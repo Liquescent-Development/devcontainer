@@ -11,17 +11,24 @@ if [ -f "/workspace/.env" ]; then
     export $(cat /workspace/.env | grep -v '^#' | xargs)
 fi
 
+# Always copy host gitconfig if it exists (to have a writable version)
+# This is needed for the commit signing wrapper to modify git config
+if [ -f "/home/node/.gitconfig.host" ]; then
+    cp /home/node/.gitconfig.host /home/node/.gitconfig
+    echo "✅ Created writable .gitconfig from host"
+    
+    # Update the 1Password SSH program path from macOS to Linux
+    # Check if the git config uses 1Password for SSH signing
+    if grep -q "/Applications/1Password.app" /home/node/.gitconfig 2>/dev/null; then
+        # Replace macOS 1Password path with the wrapper script
+        sed -i 's|/Applications/1Password.app/Contents/MacOS/op-ssh-sign|/usr/local/bin/op-ssh-sign-wrapper.sh|g' /home/node/.gitconfig
+        echo "✅ Updated 1Password SSH signing path for Linux container"
+    fi
+fi
+
 # Check if we should use host git config
 if [ "${MOUNT_HOST_GIT_CONFIG}" = "true" ]; then
     echo "📂 Using host git configuration..."
-    
-    # Copy host gitconfig (so VS Code can add its credential helper)
-    if [ -f "/home/node/.gitconfig.host" ]; then
-        cp /home/node/.gitconfig.host /home/node/.gitconfig
-        echo "✅ Copied host .gitconfig (writable copy for VS Code)"
-    else
-        echo "⚠️  Host .gitconfig not found"
-    fi
     
     # Symlink SSH directory (read-only is fine for SSH keys)
     if [ -d "/home/node/.ssh-host" ]; then
