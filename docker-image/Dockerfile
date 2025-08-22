@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
   pkg-config \
   libssl-dev \
-  # Note: direnv now installed via ghcr.io/devcontainers-community/features/direnv:1
+  direnv \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Note: 1Password CLI is now installed via Dev Container Feature:
