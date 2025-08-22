@@ -77,7 +77,7 @@ for domain in \
 done
 
 # Process environment variable domains first (user/machine specific from .env)
-if [ -n "$CUSTOM_ALLOWED_DOMAINS" ]; then
+if [ -n "${CUSTOM_ALLOWED_DOMAINS:-}" ]; then
     echo "Processing user-specific allowed domains from CUSTOM_ALLOWED_DOMAINS environment variable..."
     IFS=',' read -ra DOMAINS <<< "$CUSTOM_ALLOWED_DOMAINS"
     for domain in "${DOMAINS[@]}"; do
