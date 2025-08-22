@@ -61,3 +61,17 @@ jobs:
             TZ=UTC
             CLAUDE_CODE_VERSION=latest
             GIT_DELTA_VERSION=0.18.2
+          
+      # Make the package public (only on main branch)
+      - name: Make package public
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          echo "Setting package visibility to public..."
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /orgs/liquescent-development/packages/container/devcontainer/versions \
+            -f visibility='public' || echo "Package may already be public or this requires manual configuration"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
