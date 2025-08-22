@@ -1,0 +1,77 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docker-image/**'
+  pull_request:
+    paths:
+      - 'docker-image/**'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag'
+        required: true
+        default: 'latest'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: liquescent-development/devcontainer
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ github.event.inputs.tag || 'latest' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker-image
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            TZ=UTC
+            CLAUDE_CODE_VERSION=latest
+            GIT_DELTA_VERSION=0.18.2
+          
+      # Make the package public (only on main branch)
+      - name: Make package public
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          echo "Setting package visibility to public..."
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /orgs/liquescent-development/packages/container/devcontainer/versions \
+            -f visibility='public' || echo "Package may already be public or this requires manual configuration"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

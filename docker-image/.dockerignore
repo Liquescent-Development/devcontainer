@@ -1,0 +1,7 @@
+README.md
+build.sh
+.git
+.gitignore
+*.swp
+*.tmp
+.DS_Store

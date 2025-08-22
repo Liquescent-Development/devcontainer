@@ -1,14 +1,8 @@
 {
-  "name": "Claude Code Sandbox",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "args": {
-      "TZ": "${localEnv:TZ:UTC}",
-      "CLAUDE_CODE_VERSION": "latest",
-      "GIT_DELTA_VERSION": "0.18.2",
-      "ZSH_IN_DOCKER_VERSION": "1.2.0"
-    }
-  },
+  "name": "Liquescent Development Environment",
+  // Use pre-built image from GitHub Container Registry
+  // To build locally: cd docker-image && ./build.sh
+  "image": "ghcr.io/liquescent-development/devcontainer:latest",
   "runArgs": [
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW",
@@ -40,7 +34,45 @@
       }
     }
   },
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.23"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "installTools": true,
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "stable",
+      "profile": "default"
+    },
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "8.0",
+      "additionalVersions": ""
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/itsmechlark/features/1password:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers-community/features/direnv:1": {
+      "version": "latest"
+    }
+  },
   "remoteUser": "node",
+  "userEnvProbe": "loginInteractiveShell",
+  "updateRemoteUserUID": true,
+  "secrets": {
+    "OP_SERVICE_ACCOUNT_TOKEN": {
+      "description": "1Password Service Account token for secure environment variable management",
+      "documentationUrl": "https://developer.1password.com/docs/service-accounts/"
+    },
+    "OP_CONNECT_TOKEN": {
+      "description": "1Password Connect Server token (alternative to service account)",
+      "documentationUrl": "https://developer.1password.com/docs/connect/"
+    }
+  },
   "mounts": [
     "source=devcontainer-history-${devcontainerId},target=/commandhistory,type=volume",
     "source=${localEnv:HOME}/.claude/agents,target=/home/node/.claude/agents,type=bind,readonly",
@@ -48,13 +80,39 @@
     "source=${localEnv:HOME}/.claude/settings.json,target=/home/node/.claude/settings.json,type=bind,readonly",
     "source=${localEnv:HOME}/Library/Fonts,target=/usr/share/fonts/truetype/custom,type=bind,readonly",
     "source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig.host,type=bind,readonly",
-    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh-host,type=bind,readonly"
+    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh-host,type=bind,readonly",
+    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind"
   ],
   "containerEnv": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
-    "CLAUDE_CONFIG_DIR": "/home/node/.claude"
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
+    "SSH_AUTH_SOCK": "/ssh-agent"
+  },
+  "remoteEnv": {
+    "OP_SERVICE_ACCOUNT_TOKEN": "${localEnv:OP_SERVICE_ACCOUNT_TOKEN}",
+    "OP_CREATE_SERVICE_ACCOUNT": "${localEnv:OP_CREATE_SERVICE_ACCOUNT}",
+    "OP_SA_EXPIRES_IN": "${localEnv:OP_SA_EXPIRES_IN}",
+    "OP_SA_VAULTS": "${localEnv:OP_SA_VAULTS}",
+    "OP_SA_NAME": "${localEnv:OP_SA_NAME}",
+    "OP_CONNECT_HOST": "${localEnv:OP_CONNECT_HOST}",
+    "OP_CONNECT_TOKEN": "${localEnv:OP_CONNECT_TOKEN}",
+    "CUSTOM_ALLOWED_DOMAINS": "${localEnv:CUSTOM_ALLOWED_DOMAINS}",
+    "MOUNT_HOST_GIT_CONFIG": "${localEnv:MOUNT_HOST_GIT_CONFIG}"
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "sudo /usr/local/bin/init-firewall.sh && /usr/local/bin/setup-git.sh && /usr/local/bin/setup-direnv.sh"
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "32gb"
+  },
+  "waitFor": "postCreateCommand",
+  "postCreateCommand": {
+    "firewall": "sudo /usr/local/bin/init-firewall.sh",
+    "git": "/usr/local/bin/setup-git.sh",
+    "1password": "/usr/local/bin/setup-1password.sh"
+  },
+  "postStartCommand": {
+    "verify-1password": "op vault list 2>/dev/null || echo '⚠️  1Password CLI not authenticated. Run setup-1password.sh for options.'"
+  }
 }
