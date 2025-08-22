@@ -12,41 +12,82 @@ if [ -f "/workspace/.env" ]; then
 fi
 
 # Always copy host gitconfig if it exists (to have a writable version)
-# This is needed for the commit signing wrapper to modify git config
 if [ -f "/home/node/.gitconfig.host" ]; then
     cp /home/node/.gitconfig.host /home/node/.gitconfig
     echo "✅ Created writable .gitconfig from host"
     
-    # Update the 1Password SSH program path from macOS to Linux
-    # Check if the git config uses 1Password for SSH signing
+    # Check if git config uses 1Password for SSH signing
     if grep -q "/Applications/1Password.app" /home/node/.gitconfig 2>/dev/null; then
-        # Replace macOS 1Password path with the wrapper script
-        sed -i 's|/Applications/1Password.app/Contents/MacOS/op-ssh-sign|/usr/local/bin/op-ssh-sign-wrapper.sh|g' /home/node/.gitconfig
-        echo "✅ Updated 1Password SSH signing path for Linux container"
+        # Get the current signing key from the config
+        signing_key=$(git config --global user.signingkey 2>/dev/null || true)
+        
+        # If we have a signing key and SSH agent is available, configure for SSH agent signing
+        if [ -n "$signing_key" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+            # Remove the 1Password-specific program path
+            git config --global --unset gpg.ssh.program 2>/dev/null || true
+            echo "✅ Configured git to use SSH agent for signing (removed 1Password desktop path)"
+            echo "   SSH agent forwarding detected at: $SSH_AUTH_SOCK"
+        else
+            # If no SSH agent, disable signing to avoid errors
+            git config --global commit.gpgsign false
+            echo "⚠️  No SSH agent detected, disabled commit signing"
+            echo "   To enable: ensure SSH agent forwarding is configured on your host"
+        fi
     fi
 fi
 
-# Check if we should use host git config
-if [ "${MOUNT_HOST_GIT_CONFIG}" = "true" ]; then
-    echo "📂 Using host git configuration..."
+# Check for SSH agent forwarding
+if [ -S "$SSH_AUTH_SOCK" ]; then
+    echo "🔑 SSH agent forwarding detected at: $SSH_AUTH_SOCK"
+    echo "   Git operations for private repos will use the forwarded agent"
     
-    # Symlink SSH directory (read-only is fine for SSH keys)
-    if [ -d "/home/node/.ssh-host" ]; then
-        # Remove existing .ssh if it exists
-        rm -rf /home/node/.ssh
-        ln -sf /home/node/.ssh-host /home/node/.ssh
-        echo "✅ Linked host .ssh directory (read-only)"
-    else
-        echo "⚠️  Host .ssh directory not found"
-    fi
-else
-    echo "🔒 Host git configuration is isolated."
-    echo "   Run '/usr/local/bin/create-limited-git-setup.sh' to configure git for this container."
-    echo ""
-    
-    # Ensure .ssh directory exists with correct permissions
+    # Create .ssh directory with proper permissions
     mkdir -p /home/node/.ssh
     chmod 700 /home/node/.ssh
+    
+    # Copy known_hosts from host if available (for host key verification)
+    if [ -f "/home/node/.ssh-host/known_hosts" ]; then
+        cp /home/node/.ssh-host/known_hosts /home/node/.ssh/known_hosts
+        chmod 644 /home/node/.ssh/known_hosts
+        echo "✅ Copied known_hosts from host for SSH verification"
+    fi
+    
+    # Create SSH config to ensure agent is used
+    cat > /home/node/.ssh/config << EOF
+Host *
+    ForwardAgent yes
+    AddKeysToAgent yes
+    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile ~/.ssh/id_rsa
+    IdentitiesOnly no
+EOF
+    chmod 600 /home/node/.ssh/config
+    echo "✅ Configured SSH to use forwarded agent for all git operations"
+else
+    echo "⚠️  No SSH agent forwarding detected"
+    
+    # Check if we should use host git config
+    if [ "${MOUNT_HOST_GIT_CONFIG}" = "true" ]; then
+        echo "📂 Using host git configuration..."
+        
+        # Symlink SSH directory (fallback to key files if no agent)
+        if [ -d "/home/node/.ssh-host" ]; then
+            # Remove existing .ssh if it exists
+            rm -rf /home/node/.ssh
+            ln -sf /home/node/.ssh-host /home/node/.ssh
+            echo "✅ Linked host .ssh directory (read-only)"
+        else
+            echo "⚠️  Host .ssh directory not found"
+        fi
+    else
+        echo "🔒 Host git configuration is isolated."
+        echo "   Run '/usr/local/bin/create-limited-git-setup.sh' to configure git for this container."
+        echo ""
+        
+        # Ensure .ssh directory exists with correct permissions
+        mkdir -p /home/node/.ssh
+        chmod 700 /home/node/.ssh
+    fi
 fi
 
 # Check if git user.name is set
