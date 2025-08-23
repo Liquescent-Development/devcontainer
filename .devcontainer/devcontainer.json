@@ -65,8 +65,5 @@
     "firewall": "sudo /usr/local/bin/init-firewall.sh",
     "git": "/usr/local/bin/setup-git.sh",
     "1password": "/usr/local/bin/setup-1password.sh"
-  },
-  "postStartCommand": {
-    "verify-1password": "op vault list 2>/dev/null || echo '⚠️  1Password CLI not authenticated. Run setup-1password.sh for options.'"
   }
 }
