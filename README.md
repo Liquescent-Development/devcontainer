@@ -2,25 +2,31 @@
   <img src="https://liquescent.dev/liquescent.png" alt="Liquescent Development" width="400">
 </p>
 
-# Liquescent Development DevContainer
+# Liquescent Development DevContainer Templates
 
-A secure, polyglot development container with network isolation, comprehensive language support, and enterprise-grade secret management.
+A collection of secure, polyglot development container templates with network isolation, comprehensive language support, and enterprise-grade secret management.
 
-## 📦 Distribution Methods
+This repository contains Dev Container templates that follow the [official Dev Container specification](https://containers.dev/). Templates are located in the `src/` directory and can be used to quickly set up development environments in any project.
 
-This repository provides two ways to use our development container:
+## 📦 Repository Structure
 
-### 1. **Pre-built Docker Image** (Recommended for speed)
-- Ready-to-use image from GitHub Container Registry
-- No build time required
-- Automatic updates when we publish new versions
-- Image: `ghcr.io/liquescent-development/devcontainer:latest`
+```
+├── src/                         # Dev Container templates (distributed to users)
+│   └── liquescent-devcontainer/ # Our primary template
+├── image-sources/               # Dockerfiles for pre-built images (maintainers only)
+│   └── liquescent-devcontainer/ # Source for building the template's image
+└── .github/workflows/           # CI/CD for building and publishing images
+```
 
-### 2. **Dev Container Template** (Recommended for customization)
-- Spec-compliant template you can add to any project
-- Customize the configuration for your specific needs
-- Located in `src/liquescent-devcontainer/`
-- Can be distributed via OCI registry as a template
+## 🔧 Available Templates
+
+### `liquescent-devcontainer`
+Our flagship development container template:
+
+- **Uses pre-built image** from `ghcr.io/liquescent-development/devcontainer:latest`
+- **Fast startup** - no build time required
+- **Self-contained template** in `src/liquescent-devcontainer/`
+- **Ready for distribution** via OCI registry
 
 ## 🔒 Key Features
 
@@ -52,9 +58,9 @@ This repository provides two ways to use our development container:
 - VS Code with Dev Containers extension
 - Git
 
-### Option 1: Using Pre-built Image (Fastest)
+### Option 1: Manual Copy (Simple)
 
-1. **Copy the `.devcontainer` folder** from this repository to your project
+1. **Copy the template's `.devcontainer` folder** from `src/liquescent-devcontainer/.devcontainer/` to your project root
 
 2. **Configure your environment**:
    ```bash
@@ -68,9 +74,9 @@ This repository provides two ways to use our development container:
    ```
    Then use the command palette: `Dev Containers: Reopen in Container`
 
-The container will automatically pull from `ghcr.io/liquescent-development/devcontainer:latest`.
+The container will build from the included Dockerfile on first use.
 
-### Option 2: Using as a Template (Most Flexible)
+### Option 2: Using Dev Container CLI (Recommended)
 
 1. **Install the Dev Container CLI** (if not using VS Code):
    ```bash
@@ -79,7 +85,7 @@ The container will automatically pull from `ghcr.io/liquescent-development/devco
 
 2. **Apply the template to your project**:
    
-   From this repository:
+   From this repository (for development/testing):
    ```bash
    devcontainer templates apply \
      --workspace-folder . \

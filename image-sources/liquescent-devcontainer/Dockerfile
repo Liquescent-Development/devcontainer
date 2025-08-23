@@ -174,13 +174,11 @@ RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} && \
 # Copy and set up scripts and theme
 COPY scripts/init-firewall.sh /usr/local/bin/
 COPY scripts/setup-git.sh /usr/local/bin/
-COPY scripts/create-limited-git-setup.sh /usr/local/bin/
 COPY scripts/setup-1password.sh /usr/local/bin/
 COPY scripts/liquescent.omp.json /usr/local/share/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   chmod +x /usr/local/bin/setup-git.sh && \
-  chmod +x /usr/local/bin/create-limited-git-setup.sh && \
   chmod +x /usr/local/bin/setup-1password.sh && \
   chmod 644 /usr/local/share/liquescent.omp.json && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
