@@ -23,7 +23,7 @@ This repository contains Dev Container templates that follow the [official Dev C
 ### `liquescent-devcontainer`
 Our flagship development container template:
 
-- **Uses pre-built image** from `ghcr.io/liquescent-development/devcontainer:latest`
+- **Uses pre-built image** from `ghcr.io/liquescent-development/liquescent-devcontainer:latest`
 - **Fast startup** - no build time required
 - **Self-contained template** in `src/liquescent-devcontainer/`
 - **Ready for distribution** via OCI registry
