@@ -80,11 +80,11 @@ done
 # Based on: https://support.1password.com/ports-domains/
 echo "Configuring 1Password domains..."
 # Common 1Password subdomains across all regions (.com, .eu, .ca)
-onepassword_subdomains="1password my.1password app.1password api.1password events.1password b5n.1password"
-onepassword_tlds="com eu ca"
+onepassword_subdomains=("1password" "my.1password" "app.1password" "api.1password" "events.1password" "b5n.1password")
+onepassword_tlds=("com" "eu" "ca")
 
-for subdomain in $onepassword_subdomains; do
-    for tld in $onepassword_tlds; do
+for subdomain in "${onepassword_subdomains[@]}"; do
+    for tld in "${onepassword_tlds[@]}"; do
         domain="${subdomain}.${tld}"
         echo "Resolving $domain..."
         # Use timeout and don't fail if a regional domain doesn't exist
