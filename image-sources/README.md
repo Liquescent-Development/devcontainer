@@ -24,7 +24,7 @@ To build locally:
 
 ```bash
 cd image-sources/liquescent-devcontainer
-docker build -t ghcr.io/liquescent-development/devcontainer:latest .
+docker build -t ghcr.io/liquescent-development/liquescent-devcontainer:latest .
 ```
 
 ## Adding New Images
