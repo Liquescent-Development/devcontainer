@@ -1,0 +1,72 @@
+{
+  "name": "Liquescent Development Environment",
+  // Uses Docker Compose to load .env file automatically
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          },
+          "zsh": {
+            "path": "zsh"
+          }
+        }
+      }
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.23"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "installTools": true,
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "stable",
+      "profile": "default"
+    },
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "8.0",
+      "additionalVersions": ""
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/itsmechlark/features/1password:1": {
+      "version": "latest"
+    }
+  },
+  "remoteUser": "node",
+  "userEnvProbe": "loginInteractiveShell",
+  "updateRemoteUserUID": true,
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "32gb"
+  },
+  "waitFor": "postCreateCommand",
+  "postCreateCommand": {
+    "firewall": "sudo /usr/local/bin/init-firewall.sh",
+    "git": "/usr/local/bin/setup-git.sh",
+    "1password": "/usr/local/bin/setup-1password.sh"
+  },
+  "postStartCommand": {
+    "verify-1password": "op vault list 2>/dev/null || echo '⚠️  1Password CLI not authenticated. Run setup-1password.sh for options.'"
+  }
+}

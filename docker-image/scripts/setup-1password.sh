@@ -6,6 +6,25 @@ set -e
 
 echo "🔐 Checking 1Password CLI authentication..."
 
+# Unset empty Connect variables to prevent interference with service account token
+# The 1Password CLI checks if these variables exist, not if they have values
+if [ -z "$OP_CONNECT_HOST" ]; then
+    unset OP_CONNECT_HOST
+fi
+if [ -z "$OP_CONNECT_TOKEN" ]; then
+    unset OP_CONNECT_TOKEN
+fi
+
+# Also update the shell RC files to ensure they're unset in new shells
+if [ -z "${OP_CONNECT_HOST:-}" ]; then
+    echo "unset OP_CONNECT_HOST 2>/dev/null || true" >> ~/.bashrc
+    echo "unset OP_CONNECT_HOST 2>/dev/null || true" >> ~/.zshrc
+fi
+if [ -z "${OP_CONNECT_TOKEN:-}" ]; then
+    echo "unset OP_CONNECT_TOKEN 2>/dev/null || true" >> ~/.bashrc
+    echo "unset OP_CONNECT_TOKEN 2>/dev/null || true" >> ~/.zshrc
+fi
+
 # Check if we already have a service account token
 if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
     echo "✅ Using 1Password service account token"
@@ -19,8 +38,8 @@ if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
     fi
 fi
 
-# Check for Connect Server configuration
-if [ -n "$OP_CONNECT_HOST" ] && [ -n "$OP_CONNECT_TOKEN" ]; then
+# Check for Connect Server configuration (only if both values are non-empty)
+if [ -n "${OP_CONNECT_HOST:-}" ] && [ -n "${OP_CONNECT_TOKEN:-}" ]; then
     echo "✅ Using 1Password Connect Server at $OP_CONNECT_HOST"
     # Test the connection
     if op vault list &>/dev/null; then

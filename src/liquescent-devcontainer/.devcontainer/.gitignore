@@ -1,0 +1,9 @@
+# Environment file with personal settings
+.env
+
+# Project-specific allowed domains (optional)
+allowed-domains.txt
+
+# But keep the examples
+!.env.example
+!allowed-domains.txt.example
