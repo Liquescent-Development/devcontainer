@@ -81,7 +81,9 @@ else
         fi
     else
         echo "🔒 Host git configuration is isolated."
-        echo "   Run '/usr/local/bin/create-limited-git-setup.sh' to configure git for this container."
+        echo "   You'll need to configure git manually in this container:"
+        echo "     git config --global user.name 'Your Name'"
+        echo "     git config --global user.email 'your.email@example.com'"
         echo ""
         
         # Ensure .ssh directory exists with correct permissions
@@ -97,7 +99,7 @@ if [ -z "$(git config --global user.name)" ]; then
         echo "   Your .gitconfig may not be mounted correctly."
         echo "   You can set it manually with: git config --global user.name 'Your Name'"
     else
-        echo "   Run '/usr/local/bin/create-limited-git-setup.sh' to set up git"
+        echo "   Configure git with: git config --global user.name 'Your Name'"
     fi
 else
     echo "✅ Git user.name: $(git config --global user.name)"
@@ -110,7 +112,7 @@ if [ -z "$(git config --global user.email)" ]; then
         echo "   Your .gitconfig may not be mounted correctly."
         echo "   You can set it manually with: git config --global user.email 'your.email@example.com'"
     else
-        echo "   Run '/usr/local/bin/create-limited-git-setup.sh' to set up git"
+        echo "   Configure git with: git config --global user.email 'your.email@example.com'"
     fi
 else
     echo "✅ Git user.email: $(git config --global user.email)"

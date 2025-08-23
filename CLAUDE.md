@@ -27,9 +27,17 @@ The devcontainer uses a dual approach for 1Password integration:
    - Use `op run --env-file` to inject secrets into applications
    - Example: `op run --env-file=prod.env -- python app.py`
 
+### Repository Structure
+
+This repository follows the Dev Container template specification:
+- **Templates** in `src/<template-id>/` - Self-contained, ready-to-use templates
+- **Image sources** in `image-sources/<template-id>/` - Dockerfiles for building pre-built images
+- Templates use pre-built images from GitHub Container Registry for fast startup
+- The `liquescent-devcontainer` template is our primary offering
+
 ### Core Components
 
-1. **DevContainer Configuration** (`.devcontainer/devcontainer.json`)
+1. **DevContainer Configuration** (`src/liquescent-devcontainer/.devcontainer/devcontainer.json`)
    - Configures a complete polyglot development environment
    - Uses `containerEnv` for static configuration (NODE_OPTIONS, paths)
    - Uses `remoteEnv` for runtime configuration (1Password tokens, custom domains)
@@ -37,7 +45,7 @@ The devcontainer uses a dual approach for 1Password integration:
    - Mounts Claude configuration directory and bash history
    - Installs VS Code extensions for JavaScript/TypeScript development
 
-2. **Dockerfile** (`.devcontainer/Dockerfile`)
+2. **Dockerfile** (`image-sources/liquescent-devcontainer/Dockerfile`)
    - Base image: Node.js 20 with multi-language support
    - **Go 1.25.0**: Official installation with GOPATH configured
    - **Rust (stable)**: Installed via rustup with cargo tools (cargo-watch, cargo-edit, cargo-audit, cargo-outdated)
@@ -48,7 +56,7 @@ The devcontainer uses a dual approach for 1Password integration:
    - Installs Claude Code CLI globally
    - Configures non-root user with sudo access for firewall script
 
-3. **Firewall Script** (`.devcontainer/init-firewall.sh`)
+3. **Firewall Script** (`image-sources/liquescent-devcontainer/scripts/init-firewall.sh`)
    - Implements network isolation using iptables and ipset
    - Allows connections only to:
      - GitHub (dynamically fetched IP ranges)
@@ -58,13 +66,14 @@ The devcontainer uses a dual approach for 1Password integration:
    - Preserves Docker's internal DNS resolution
    - Verifies firewall configuration after setup
 
-## Development Commands
+## Using the Template
 
-Since this is a devcontainer configuration project, there are no build/test commands. To use this devcontainer:
+To use this devcontainer template in your project:
 
-1. Open the project in VS Code with the Dev Containers extension
-2. Reopen in container when prompted
-3. The firewall will automatically initialize on container creation
+1. Copy the entire `src/liquescent-devcontainer/.devcontainer/` folder to your project root
+2. Customize `.devcontainer/.env` with your settings
+3. Open in VS Code with the Dev Containers extension
+4. The container will build from the included Dockerfile and initialize automatically
 
 ## Security Model
 

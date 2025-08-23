@@ -1,0 +1,289 @@
+name: Build and Publish Dev Containers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'image-sources/**'
+      - 'src/**'
+      - '.github/workflows/build-and-publish.yml'
+  pull_request:
+    paths:
+      - 'image-sources/**'
+      - 'src/**'
+      - '.github/workflows/build-and-publish.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  ORG_NAME: liquescent-development
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      templates: ${{ steps.detect.outputs.templates }}
+      template-versions: ${{ steps.detect.outputs.template-versions }}
+      images: ${{ steps.detect.outputs.images }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect templates and their versions
+        id: detect
+        run: |
+          # Get list of all templates with their versions
+          templates=()
+          template_versions="{}"
+          
+          for template_dir in src/*/; do
+            if [ -f "${template_dir}devcontainer-template.json" ]; then
+              template_name=$(basename "$template_dir")
+              version=$(jq -r '.version' "${template_dir}devcontainer-template.json")
+              templates+=("$template_name")
+              template_versions=$(echo "$template_versions" | jq --arg t "$template_name" --arg v "$version" '. + {($t): $v}')
+            fi
+          done
+          
+          # Convert to JSON arrays
+          templates_json=$(printf '%s\n' "${templates[@]}" | jq -R -s -c 'split("\n")[:-1]')
+          echo "templates=${templates_json}" >> $GITHUB_OUTPUT
+          # Compact JSON to single line for GitHub Actions
+          template_versions_compact=$(echo "$template_versions" | jq -c '.')
+          echo "template-versions=${template_versions_compact}" >> $GITHUB_OUTPUT
+          
+          # Get list of all image sources
+          images=$(ls -d image-sources/*/ 2>/dev/null | xargs -I {} basename {} | jq -R -s -c 'split("\n")[:-1]')
+          echo "images=${images}" >> $GITHUB_OUTPUT
+          
+          echo "Found templates: ${templates_json}"
+          echo "Template versions: ${template_versions}"
+          echo "Found images: ${images}"
+
+  build-images:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.images != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        template: ${{ fromJson(needs.detect-changes.outputs.images) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get template version
+        id: version
+        run: |
+          # Get version from template metadata if it exists
+          TEMPLATE_PATH="src/${{ matrix.template }}/devcontainer-template.json"
+          if [ -f "$TEMPLATE_PATH" ]; then
+            VERSION=$(jq -r '.version' "$TEMPLATE_PATH")
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            
+            # Parse semver components
+            MAJOR=$(echo $VERSION | cut -d. -f1)
+            MINOR=$(echo $VERSION | cut -d. -f2)
+            echo "major=${MAJOR}" >> $GITHUB_OUTPUT
+            echo "minor=${MAJOR}.${MINOR}" >> $GITHUB_OUTPUT
+          else
+            echo "version=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Docker image tags
+        id: meta
+        run: |
+          IMAGE_NAME="${{ env.ORG_NAME }}/${{ matrix.template }}"
+          TAGS=""
+          
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # PR builds: pr-<number>
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            TAGS="${{ env.REGISTRY }}/${IMAGE_NAME}:pr-${PR_NUMBER}"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # Main branch builds with semver
+            VERSION="${{ steps.version.outputs.version }}"
+            
+            if [[ "$VERSION" != "latest" ]]; then
+              # Tag with full version
+              TAGS="${{ env.REGISTRY }}/${IMAGE_NAME}:${VERSION}"
+              # Tag with major.minor
+              TAGS="${TAGS},${{ env.REGISTRY }}/${IMAGE_NAME}:${{ steps.version.outputs.minor }}"
+              # Tag with major only
+              TAGS="${TAGS},${{ env.REGISTRY }}/${IMAGE_NAME}:${{ steps.version.outputs.major }}"
+            fi
+            
+            # Always tag as latest on main
+            TAGS="${TAGS},${{ env.REGISTRY }}/${IMAGE_NAME}:latest"
+          fi
+          
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "Generated tags: ${TAGS}"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./image-sources/${{ matrix.template }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+          build-args: |
+            TZ=UTC
+            CLAUDE_CODE_VERSION=latest
+            GIT_DELTA_VERSION=0.18.2
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  publish-templates:
+    needs: [detect-changes, build-images]
+    if: always() && needs.detect-changes.outputs.templates != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        template: ${{ fromJson(needs.detect-changes.outputs.templates) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Dev Container CLI
+        run: npm install -g @devcontainers/cli
+
+      - name: Get template version
+        id: version
+        run: |
+          TEMPLATE_PATH="src/${{ matrix.template }}/devcontainer-template.json"
+          VERSION=$(jq -r '.version' "$TEMPLATE_PATH")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          
+          # Parse semver components
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+          echo "major=${MAJOR}" >> $GITHUB_OUTPUT
+          echo "minor=${MAJOR}.${MINOR}" >> $GITHUB_OUTPUT
+          echo "patch=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish template for PR
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          
+          TEMPLATE_PATH="src/${{ matrix.template }}"
+          NAMESPACE="${{ env.REGISTRY }}/${{ env.ORG_NAME }}/templates"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          
+          # For PRs, publish with pr-<number> tag
+          echo "Publishing template for PR #${PR_NUMBER}..."
+          
+          # Create a temporary version for PR (not a real semver)
+          # We'll use 0.0.0-pr.<number> which is valid semver prerelease
+          PR_VERSION="0.0.0-pr.${PR_NUMBER}"
+          
+          # Temporarily modify the version in template.json
+          jq --arg v "$PR_VERSION" '.version = $v' ${TEMPLATE_PATH}/devcontainer-template.json > tmp.json
+          mv tmp.json ${TEMPLATE_PATH}/devcontainer-template.json
+          
+          # Publish the template
+          devcontainer templates publish \
+            --namespace "${NAMESPACE}" \
+            "${TEMPLATE_PATH}"
+          
+          # Restore original version
+          git checkout -- ${TEMPLATE_PATH}/devcontainer-template.json
+
+      - name: Publish template for main branch
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          
+          TEMPLATE_PATH="src/${{ matrix.template }}"
+          NAMESPACE="${{ env.REGISTRY }}/${{ env.ORG_NAME }}/templates"
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          echo "Publishing template version ${VERSION}..."
+          
+          # The CLI will handle semver tagging automatically
+          # It will create tags for:
+          # - Full version (e.g., 1.2.3)
+          # - Minor version (e.g., 1.2) 
+          # - Major version (e.g., 1)
+          # - latest
+          
+          devcontainer templates publish \
+            --namespace "${NAMESPACE}" \
+            "${TEMPLATE_PATH}"
+
+  summary:
+    needs: [build-images, publish-templates]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            echo "### PR #${PR_NUMBER} Artifacts" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Docker images have been published with tag: \`pr-${PR_NUMBER}\`" >> $GITHUB_STEP_SUMMARY
+            echo "Templates have been published with version: \`0.0.0-pr.${PR_NUMBER}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### To test the template:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "devcontainer templates apply \\" >> $GITHUB_STEP_SUMMARY
+            echo "  --template-id ghcr.io/${{ env.ORG_NAME }}/templates/<template-name>:0.0.0-pr.${PR_NUMBER}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### To use the Docker image directly:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`yaml" >> $GITHUB_STEP_SUMMARY
+            echo "image: ghcr.io/${{ env.ORG_NAME }}/<template-name>:pr-${PR_NUMBER}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "### Main Branch Build" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Templates and images have been published with semantic versioning." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The following tags are available:" >> $GITHUB_STEP_SUMMARY
+            echo "- Full version (e.g., \`1.0.0\`)" >> $GITHUB_STEP_SUMMARY
+            echo "- Minor version (e.g., \`1.0\`)" >> $GITHUB_STEP_SUMMARY  
+            echo "- Major version (e.g., \`1\`)" >> $GITHUB_STEP_SUMMARY
+            echo "- Latest (\`latest\`)" >> $GITHUB_STEP_SUMMARY
+          fi
