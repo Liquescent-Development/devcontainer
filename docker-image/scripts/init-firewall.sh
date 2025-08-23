@@ -76,6 +76,47 @@ for domain in \
     done < <(echo "$ips")
 done
 
+# Resolve and add 1Password domains (required for 1Password CLI to function)
+# Based on: https://support.1password.com/ports-domains/
+echo "Configuring 1Password domains..."
+# Common 1Password subdomains across all regions (.com, .eu, .ca)
+onepassword_subdomains="1password my.1password app.1password api.1password events.1password b5n.1password"
+onepassword_tlds="com eu ca"
+
+for subdomain in $onepassword_subdomains; do
+    for tld in $onepassword_tlds; do
+        domain="${subdomain}.${tld}"
+        echo "Resolving $domain..."
+        # Use timeout and don't fail if a regional domain doesn't exist
+        ips=$(timeout 2 dig +noall +answer A "$domain" 2>/dev/null | awk '$4 == "A" {print $5}')
+        if [ -n "$ips" ]; then
+            while read -r ip; do
+                if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+                    echo "  Adding $ip"
+                    ipset add allowed-domains "$ip" 2>/dev/null || true
+                fi
+            done < <(echo "$ips")
+        fi
+    done
+done
+
+# Additional 1Password service domains
+for domain in \
+    "cache.agilebits.com" \
+    "c.1passwordservices.com" \
+    "app.1passwordusercontent.com"; do
+    echo "Resolving $domain..."
+    ips=$(timeout 2 dig +noall +answer A "$domain" 2>/dev/null | awk '$4 == "A" {print $5}')
+    if [ -n "$ips" ]; then
+        while read -r ip; do
+            if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+                echo "  Adding $ip"
+                ipset add allowed-domains "$ip" 2>/dev/null || true
+            fi
+        done < <(echo "$ips")
+    fi
+done
+
 # Process environment variable domains (from .env file via Docker Compose)
 if [ -n "${CUSTOM_ALLOWED_DOMAINS:-}" ]; then
     echo "Processing custom allowed domains from CUSTOM_ALLOWED_DOMAINS environment variable..."

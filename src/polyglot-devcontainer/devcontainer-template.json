@@ -1,0 +1,47 @@
+{
+    "id": "polyglot-devcontainer",
+    "version": "1.0.0",
+    "name": "Liquescent Polyglot Development Container",
+    "description": "A secure, polyglot development container with network isolation, comprehensive language support (Node.js, Go, Python, Rust, .NET), and enterprise-grade secret management via 1Password CLI.",
+    "documentationURL": "https://github.com/Liquescent-Development/devcontainer",
+    "licenseURL": "https://github.com/Liquescent-Development/devcontainer/blob/main/LICENSE",
+    "publisher": "Liquescent Development",
+    "keywords": [
+        "devcontainer",
+        "polyglot",
+        "node",
+        "go",
+        "python",
+        "rust",
+        "dotnet",
+        "1password",
+        "secure",
+        "firewall"
+    ],
+    "platforms": [
+        "Any"
+    ],
+    "options": {
+        "imageSource": {
+            "type": "string",
+            "description": "Use pre-built image or build from Dockerfile",
+            "enum": ["image", "dockerfile"],
+            "default": "image"
+        },
+        "timezone": {
+            "type": "string",
+            "description": "Container timezone (e.g., America/Phoenix, Europe/London)",
+            "default": "UTC"
+        },
+        "enableSocks5": {
+            "type": "boolean",
+            "description": "Enable SOCKS5 proxy support for VPN/corporate networks",
+            "default": true
+        },
+        "mountGitConfig": {
+            "type": "boolean",
+            "description": "Mount host Git configuration and SSH keys",
+            "default": false
+        }
+    }
+}

@@ -6,6 +6,22 @@
 
 A secure, polyglot development container with network isolation, comprehensive language support, and enterprise-grade secret management.
 
+## 📦 Distribution Methods
+
+This repository provides two ways to use our development container:
+
+### 1. **Pre-built Docker Image** (Recommended for speed)
+- Ready-to-use image from GitHub Container Registry
+- No build time required
+- Automatic updates when we publish new versions
+- Image: `ghcr.io/liquescent-development/devcontainer:latest`
+
+### 2. **Dev Container Template** (Recommended for customization)
+- Spec-compliant template you can add to any project
+- Customize the configuration for your specific needs
+- Located in `src/polyglot-devcontainer/`
+- Can be distributed via OCI registry as a template
+
 ## 🔒 Key Features
 
 ### Security & Network Isolation
@@ -36,9 +52,9 @@ A secure, polyglot development container with network isolation, comprehensive l
 - VS Code with Dev Containers extension
 - Git
 
-### Setup
+### Option 1: Using Pre-built Image (Fastest)
 
-1. **Clone this repository or copy `devcontainer.json`** to your project's `.devcontainer` folder
+1. **Copy the `.devcontainer` folder** from this repository to your project
 
 2. **Configure your environment**:
    ```bash
@@ -53,6 +69,24 @@ A secure, polyglot development container with network isolation, comprehensive l
    Then use the command palette: `Dev Containers: Reopen in Container`
 
 The container will automatically pull from `ghcr.io/liquescent-development/devcontainer:latest`.
+
+### Option 2: Using as a Template (Most Flexible)
+
+1. **Install the Dev Container CLI** (if not using VS Code):
+   ```bash
+   npm install -g @devcontainers/cli
+   ```
+
+2. **Apply the template to your project**:
+   ```bash
+   devcontainer templates apply \
+     --workspace-folder . \
+     --template-id ./src/polyglot-devcontainer
+   ```
+
+3. **Configure and customize** as needed
+
+4. **Open in your preferred tool** (VS Code, CLI, etc.)
 
 ## ⚙️ Configuration
 
@@ -88,6 +122,7 @@ By default, only these domains are accessible:
 - npm registry (registry.npmjs.org)
 - Anthropic API (api.anthropic.com)
 - Docker Hub (hub.docker.com)
+- 1Password (*.1password.com, *.1password.eu, *.1password.ca, *.1passwordservices.com)
 
 #### Adding Custom Domains
 
