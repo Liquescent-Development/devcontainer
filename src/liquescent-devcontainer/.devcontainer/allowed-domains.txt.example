@@ -1,0 +1,58 @@
+# Custom Allowed Domains and IP Ranges
+# Copy this file to 'allowed-domains.txt' in your project root to add custom allowed domains/IPs
+#
+# Note: The following domains are already allowed by default:
+# - GitHub (all necessary endpoints)
+# - npm registry
+# - Anthropic API
+# - 1Password services (all regions: .com, .eu, .ca)
+# - Docker Hub
+#
+# Format:
+# - One entry per line
+# - Domain names will be resolved to IPs (e.g., example.com)
+# - CIDR ranges are supported (e.g., 192.168.1.0/24)
+# - Individual IPs are supported (e.g., 192.168.1.1)
+# - Lines starting with # are comments
+# - Empty lines are ignored
+#
+# Examples:
+
+# AWS Bedrock endpoints (uncomment regions you need)
+# US Regions
+# bedrock.us-east-1.amazonaws.com
+# bedrock.us-west-2.amazonaws.com
+# bedrock-runtime.us-east-1.amazonaws.com
+# bedrock-runtime.us-west-2.amazonaws.com
+# bedrock-agent.us-east-1.amazonaws.com
+# bedrock-agent-runtime.us-east-1.amazonaws.com
+
+# Europe Regions
+# bedrock.eu-west-1.amazonaws.com
+# bedrock.eu-west-3.amazonaws.com
+# bedrock.eu-central-1.amazonaws.com
+# bedrock-runtime.eu-west-1.amazonaws.com
+# bedrock-runtime.eu-west-3.amazonaws.com
+# bedrock-runtime.eu-central-1.amazonaws.com
+
+# Asia Pacific Regions
+# bedrock.ap-southeast-1.amazonaws.com
+# bedrock.ap-southeast-2.amazonaws.com
+# bedrock.ap-northeast-1.amazonaws.com
+# bedrock-runtime.ap-southeast-1.amazonaws.com
+# bedrock-runtime.ap-southeast-2.amazonaws.com
+# bedrock-runtime.ap-northeast-1.amazonaws.com
+
+# AWS API Gateway
+# execute-api.us-east-1.amazonaws.com
+
+# Custom API endpoints
+# api.mycompany.com
+# staging-api.mycompany.com
+
+# IP ranges for internal services
+# 10.0.0.0/8
+# 172.16.0.0/12
+
+# Individual IPs
+# 203.0.113.42

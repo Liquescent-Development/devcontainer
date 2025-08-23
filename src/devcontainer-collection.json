@@ -1,0 +1,9 @@
+{
+    "name": "Liquescent Development Templates",
+    "description": "A collection of secure, enterprise-grade development container templates by Liquescent Development",
+    "publisher": "Liquescent Development",
+    "ref": "https://github.com/Liquescent-Development/devcontainer",
+    "templates": [
+        "liquescent-devcontainer"
+    ]
+}

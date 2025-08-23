@@ -1,0 +1,47 @@
+name: Publish Dev Container Templates
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Dev Container CLI
+        run: npm install -g @devcontainers/cli
+
+      - name: Publish Templates
+        run: |
+          # Publish the template to ghcr.io
+          devcontainer templates publish \
+            --registry ghcr.io \
+            --namespace ${{ github.repository_owner }}/templates \
+            ./src
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Published Template
+        run: |
+          echo "Template published to: ghcr.io/${{ github.repository_owner }}/templates/liquescent-devcontainer"
+          echo ""
+          echo "Users can now apply it with:"
+          echo "  devcontainer templates apply --template-id ghcr.io/${{ github.repository_owner }}/templates/liquescent-devcontainer"

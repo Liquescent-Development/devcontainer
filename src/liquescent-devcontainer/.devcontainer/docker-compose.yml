@@ -6,7 +6,7 @@ services:
     # Environment variables from .env file are automatically loaded
     environment:
       # Timezone
-      - TZ=${TZ:-${templateOption:timezone}}
+      - TZ=${TZ:-UTC}
       
       # 1Password Configuration - only pass if set
       - OP_SERVICE_ACCOUNT_TOKEN=${OP_SERVICE_ACCOUNT_TOKEN:-}
@@ -17,12 +17,12 @@ services:
       - CUSTOM_ALLOWED_DOMAINS=${CUSTOM_ALLOWED_DOMAINS:-}
       
       # SOCKS5 proxy configuration
-      - SOCKS5_ENABLED=${SOCKS5_ENABLED:-${templateOption:enableSocks5}}
+      - SOCKS5_ENABLED=${SOCKS5_ENABLED:-true}
       - SOCKS5_HOST=${SOCKS5_HOST:-host.docker.internal}
       - SOCKS5_PORT=${SOCKS5_PORT:-1080}
       
       # Git configuration mounting
-      - MOUNT_HOST_GIT_CONFIG=${MOUNT_HOST_GIT_CONFIG:-${templateOption:mountGitConfig}}
+      - MOUNT_HOST_GIT_CONFIG=${MOUNT_HOST_GIT_CONFIG:-false}
       
       # Container environment
       - NODE_OPTIONS=--max-old-space-size=4096

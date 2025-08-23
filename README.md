@@ -78,10 +78,19 @@ The container will automatically pull from `ghcr.io/liquescent-development/devco
    ```
 
 2. **Apply the template to your project**:
+   
+   From this repository:
    ```bash
    devcontainer templates apply \
      --workspace-folder . \
      --template-id ./src/liquescent-devcontainer
+   ```
+   
+   Or from the published template (when available):
+   ```bash
+   devcontainer templates apply \
+     --workspace-folder . \
+     --template-id ghcr.io/liquescent-development/templates/liquescent-devcontainer
    ```
 
 3. **Configure and customize** as needed
