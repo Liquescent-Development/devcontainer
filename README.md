@@ -19,7 +19,7 @@ This repository provides two ways to use our development container:
 ### 2. **Dev Container Template** (Recommended for customization)
 - Spec-compliant template you can add to any project
 - Customize the configuration for your specific needs
-- Located in `src/polyglot-devcontainer/`
+- Located in `src/liquescent-devcontainer/`
 - Can be distributed via OCI registry as a template
 
 ## 🔒 Key Features
@@ -81,7 +81,7 @@ The container will automatically pull from `ghcr.io/liquescent-development/devco
    ```bash
    devcontainer templates apply \
      --workspace-folder . \
-     --template-id ./src/polyglot-devcontainer
+     --template-id ./src/liquescent-devcontainer
    ```
 
 3. **Configure and customize** as needed

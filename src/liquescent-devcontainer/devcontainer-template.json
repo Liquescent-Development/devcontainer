@@ -1,7 +1,7 @@
 {
-    "id": "polyglot-devcontainer",
+    "id": "liquescent-devcontainer",
     "version": "1.0.0",
-    "name": "Liquescent Polyglot Development Container",
+    "name": "Liquescent Development Container",
     "description": "A secure, polyglot development container with network isolation, comprehensive language support (Node.js, Go, Python, Rust, .NET), and enterprise-grade secret management via 1Password CLI.",
     "documentationURL": "https://github.com/Liquescent-Development/devcontainer",
     "licenseURL": "https://github.com/Liquescent-Development/devcontainer/blob/main/LICENSE",

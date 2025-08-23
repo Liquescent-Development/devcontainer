@@ -1,4 +1,4 @@
-# Liquescent Polyglot Development Container Template
+# Liquescent Development Container Template
 
 A secure, polyglot development container template with network isolation, comprehensive language support, and enterprise-grade secret management.
 
@@ -11,7 +11,7 @@ This template can be used to add a development container to your existing projec
 1. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 2. Open your project in VS Code
 3. Press `F1` and select `Dev Containers: Add Dev Container Configuration Files...`
-4. Search for "Liquescent Polyglot"
+4. Search for "Liquescent"
 5. Select the options you want
 6. Reopen in container when prompted
 
@@ -23,7 +23,7 @@ npm install -g @devcontainers/cli
 
 # Apply the template to your project
 devcontainer templates apply \
-  --template-id ghcr.io/liquescent-development/templates/polyglot-devcontainer \
+  --template-id ghcr.io/liquescent-development/templates/liquescent-devcontainer \
   --template-args '{"timezone": "America/Phoenix", "enableSocks5": true}'
 ```
 
