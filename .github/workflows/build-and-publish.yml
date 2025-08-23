@@ -51,7 +51,9 @@ jobs:
           # Convert to JSON arrays
           templates_json=$(printf '%s\n' "${templates[@]}" | jq -R -s -c 'split("\n")[:-1]')
           echo "templates=${templates_json}" >> $GITHUB_OUTPUT
-          echo "template-versions=${template_versions}" >> $GITHUB_OUTPUT
+          # Compact JSON to single line for GitHub Actions
+          template_versions_compact=$(echo "$template_versions" | jq -c '.')
+          echo "template-versions=${template_versions_compact}" >> $GITHUB_OUTPUT
           
           # Get list of all image sources
           images=$(ls -d image-sources/*/ 2>/dev/null | xargs -I {} basename {} | jq -R -s -c 'split("\n")[:-1]')
@@ -217,7 +219,7 @@ jobs:
           
           # Publish the template
           devcontainer templates publish \
-            --registry-namespace "${NAMESPACE}" \
+            --namespace "${NAMESPACE}" \
             "${TEMPLATE_PATH}"
           
           # Restore original version
@@ -244,7 +246,7 @@ jobs:
           # - latest
           
           devcontainer templates publish \
-            --registry-namespace "${NAMESPACE}" \
+            --namespace "${NAMESPACE}" \
             "${TEMPLATE_PATH}"
 
   summary:
