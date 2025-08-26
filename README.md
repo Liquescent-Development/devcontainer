@@ -135,8 +135,9 @@ See `.env.example` for all available options.
 By default, only these domains are accessible:
 - GitHub (github.com, api.github.com, etc.)
 - npm registry (registry.npmjs.org)
-- Anthropic API (api.anthropic.com)
-- Docker Hub (hub.docker.com)
+- Python Package Index (pypi.org, files.pythonhosted.org, pypi.python.org)
+- VS Code Extension Marketplace (marketplace.visualstudio.com, *.gallery.vsassets.io, vscode.blob.core.windows.net)
+- Anthropic API (api.anthropic.com, statsig.anthropic.com, sentry.io)
 - 1Password (*.1password.com, *.1password.eu, *.1password.ca, *.1passwordservices.com)
 
 #### Adding Custom Domains
