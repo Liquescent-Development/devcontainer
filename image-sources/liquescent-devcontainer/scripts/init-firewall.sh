@@ -29,6 +29,10 @@ readonly BUILTIN_DOMAINS=(
     "sentry.io"
     "statsig.anthropic.com"
     "statsig.com"
+    # Python package repositories
+    "pypi.org"
+    "files.pythonhosted.org"
+    "pypi.python.org"
 )
 
 # 1Password configuration
