@@ -33,6 +33,11 @@ readonly BUILTIN_DOMAINS=(
     "pypi.org"
     "files.pythonhosted.org"
     "pypi.python.org"
+    # VS Code Extension Marketplace
+    "marketplace.visualstudio.com"
+    "gallery.vsassets.io"
+    "gallerycdn.vsassets.io"
+    "vscode.blob.core.windows.net"
 )
 
 # 1Password configuration

@@ -60,8 +60,11 @@ This repository follows the Dev Container template specification:
    - Implements network isolation using iptables and ipset
    - Allows connections only to:
      - GitHub (dynamically fetched IP ranges)
-     - npm registry
+     - npm registry (registry.npmjs.org)
+     - Python Package Index (pypi.org, files.pythonhosted.org, pypi.python.org)
+     - VS Code Extension Marketplace (marketplace.visualstudio.com, *.gallery.vsassets.io, vscode.blob.core.windows.net)
      - Anthropic API endpoints
+     - 1Password domains (for secret management)
      - Host network (for local development)
    - Preserves Docker's internal DNS resolution
    - Verifies firewall configuration after setup
