@@ -17,6 +17,13 @@ services:
       # Custom allowed domains for firewall
       - CUSTOM_ALLOWED_DOMAINS=${CUSTOM_ALLOWED_DOMAINS:-}
       
+      # Firewall logging configuration
+      - FIREWALL_LOG_ENABLED=${FIREWALL_LOG_ENABLED:-false}
+      - FIREWALL_LOG_PREFIX=${FIREWALL_LOG_PREFIX:-FW-BLOCKED}
+      - FIREWALL_LOG_LEVEL=${FIREWALL_LOG_LEVEL:-warning}
+      - FIREWALL_LOG_RATE_LIMIT=${FIREWALL_LOG_RATE_LIMIT:-10/min}
+      - FIREWALL_LOG_BURST=${FIREWALL_LOG_BURST:-5}
+      
       # SOCKS5 proxy configuration
       - SOCKS5_ENABLED=${SOCKS5_ENABLED:-true}
       - SOCKS5_HOST=${SOCKS5_HOST:-host.docker.internal}

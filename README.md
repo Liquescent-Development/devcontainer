@@ -257,6 +257,11 @@ Common proxy scenarios:
 ### Debugging Network Issues
 
 ```bash
+# Enable firewall logging to see blocked connections
+echo "FIREWALL_LOG_ENABLED=true" >> .devcontainer/.env
+# Restart container, then view logs
+sudo dmesg -w | grep 'FW-BLOCKED'
+
 # Check firewall rules
 sudo iptables -L -v -n
 
@@ -266,6 +271,8 @@ sudo ipset list allowed-domains
 # Test connectivity
 curl -v https://example.com
 ```
+
+For detailed troubleshooting, see the [Firewall Logging Guide](docs/firewall-logging.md).
 
 ### Performance Tuning
 
@@ -305,6 +312,7 @@ Edit `devcontainer.json`:
 
 ## 📖 Documentation
 
+- [Firewall Logging Guide](docs/firewall-logging.md) - Debug network connectivity issues
 - [Docker Image Build Guide](docker-image/README.md)
 - [Environment Variables Reference](.env.example)
 - [Dev Container Specification](https://containers.dev)
