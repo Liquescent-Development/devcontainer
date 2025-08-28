@@ -22,6 +22,13 @@ IFS=$'\n\t'       # Stricter word splitting
 # CONFIGURATION
 # ============================================================================
 
+# Firewall logging configuration
+readonly FIREWALL_LOG_ENABLED="${FIREWALL_LOG_ENABLED:-false}"
+readonly FIREWALL_LOG_PREFIX="${FIREWALL_LOG_PREFIX:-FW-BLOCKED}"
+readonly FIREWALL_LOG_LEVEL="${FIREWALL_LOG_LEVEL:-warning}"  # debug, info, warning
+readonly FIREWALL_LOG_RATE_LIMIT="${FIREWALL_LOG_RATE_LIMIT:-10/min}"
+readonly FIREWALL_LOG_BURST="${FIREWALL_LOG_BURST:-5}"
+
 # Built-in allowed domains
 readonly BUILTIN_DOMAINS=(
     "registry.npmjs.org"
@@ -337,6 +344,43 @@ detect_host_network() {
 }
 
 # ============================================================================
+# LOGGING CONFIGURATION
+# ============================================================================
+
+setup_logging_chains() {
+    if [ "$FIREWALL_LOG_ENABLED" != "true" ]; then
+        return 0
+    fi
+    
+    log_info "Setting up firewall logging chains..."
+    
+    # Create logging chains for different types of blocked traffic
+    iptables -N LOG_DROP_INPUT 2>/dev/null || true
+    iptables -N LOG_DROP_OUTPUT 2>/dev/null || true
+    iptables -N LOG_DROP_FORWARD 2>/dev/null || true
+    
+    # Configure rate-limited logging for INPUT
+    iptables -A LOG_DROP_INPUT -m limit --limit "$FIREWALL_LOG_RATE_LIMIT" --limit-burst "$FIREWALL_LOG_BURST" \
+        -j LOG --log-prefix "${FIREWALL_LOG_PREFIX}-IN: " --log-level "$FIREWALL_LOG_LEVEL"
+    iptables -A LOG_DROP_INPUT -j DROP
+    
+    # Configure rate-limited logging for OUTPUT
+    iptables -A LOG_DROP_OUTPUT -m limit --limit "$FIREWALL_LOG_RATE_LIMIT" --limit-burst "$FIREWALL_LOG_BURST" \
+        -j LOG --log-prefix "${FIREWALL_LOG_PREFIX}-OUT: " --log-level "$FIREWALL_LOG_LEVEL"
+    iptables -A LOG_DROP_OUTPUT -j DROP
+    
+    # Configure rate-limited logging for FORWARD
+    iptables -A LOG_DROP_FORWARD -m limit --limit "$FIREWALL_LOG_RATE_LIMIT" --limit-burst "$FIREWALL_LOG_BURST" \
+        -j LOG --log-prefix "${FIREWALL_LOG_PREFIX}-FWD: " --log-level "$FIREWALL_LOG_LEVEL"
+    iptables -A LOG_DROP_FORWARD -j DROP
+    
+    log_info "Firewall logging enabled with:"
+    log_info "  - Prefix: $FIREWALL_LOG_PREFIX"
+    log_info "  - Level: $FIREWALL_LOG_LEVEL"
+    log_info "  - Rate limit: $FIREWALL_LOG_RATE_LIMIT (burst: $FIREWALL_LOG_BURST)"
+}
+
+# ============================================================================
 # IPTABLES RULES CONFIGURATION
 # ============================================================================
 
@@ -416,12 +460,26 @@ configure_ipset_rule() {
 }
 
 set_default_policies() {
-    log_info "Setting default firewall policies to DROP..."
-    
-    # Set default policies to DROP (MUST be last!)
-    iptables -P INPUT DROP
-    iptables -P FORWARD DROP
-    iptables -P OUTPUT DROP
+    if [ "$FIREWALL_LOG_ENABLED" = "true" ]; then
+        log_info "Setting default firewall policies with logging..."
+        
+        # Keep policies as ACCEPT and use logging chains as final rules
+        iptables -P INPUT ACCEPT
+        iptables -P FORWARD ACCEPT
+        iptables -P OUTPUT ACCEPT
+        
+        # Add catch-all rules that log and drop
+        iptables -A INPUT -j LOG_DROP_INPUT
+        iptables -A FORWARD -j LOG_DROP_FORWARD
+        iptables -A OUTPUT -j LOG_DROP_OUTPUT
+    else
+        log_info "Setting default firewall policies to DROP..."
+        
+        # Set default policies to DROP (MUST be last!)
+        iptables -P INPUT DROP
+        iptables -P FORWARD DROP
+        iptables -P OUTPUT DROP
+    fi
 }
 
 # ============================================================================
@@ -473,19 +531,31 @@ main() {
     # Step 4: Detect host network
     detect_host_network || exit 1
     
-    # Step 5: Configure iptables rules
+    # Step 5: Setup logging chains (if enabled)
+    setup_logging_chains
+    
+    # Step 6: Configure iptables rules
     configure_basic_rules
     configure_socks5_proxy
     configure_host_ports
     configure_ipset_rule
     
-    # Step 6: Set restrictive default policies
+    # Step 7: Set restrictive default policies (with or without logging)
     set_default_policies
     
-    # Step 7: Verify configuration
+    # Step 8: Verify configuration
     verify_firewall || exit 1
     
     log_info "=== Firewall Configuration Complete ==="
+    
+    # Display logging status
+    if [ "$FIREWALL_LOG_ENABLED" = "true" ]; then
+        log_info "Firewall logging is ENABLED - blocked connections will be logged"
+        log_info "View logs with: sudo dmesg | grep '$FIREWALL_LOG_PREFIX'"
+        log_info "Or follow logs with: sudo dmesg -w | grep '$FIREWALL_LOG_PREFIX'"
+    else
+        log_info "Firewall logging is DISABLED (enable with FIREWALL_LOG_ENABLED=true)"
+    fi
 }
 
 # Execute main function

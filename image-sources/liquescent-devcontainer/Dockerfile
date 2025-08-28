@@ -50,7 +50,10 @@ RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhisto
   && touch /commandhistory/.zsh_history \
   && chown -R $USERNAME /commandhistory \
   && echo "$SNIPPET" >> /home/$USERNAME/.bashrc \
-  && echo 'eval "$(direnv hook bash)"' >> /home/$USERNAME/.bashrc
+  && echo 'eval "$(direnv hook bash)"' >> /home/$USERNAME/.bashrc \
+  && mkdir -p /home/$USERNAME/.config/direnv \
+  && echo 'dotenv_if_exists' > /home/$USERNAME/.config/direnv/direnvrc \
+  && chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
 
 # Set `DEVCONTAINER` environment variable to help with orientation
 ENV DEVCONTAINER=true
@@ -163,7 +166,11 @@ RUN echo '# Path to oh-my-zsh installation' > ~/.zshrc && \
     echo '' >> ~/.zshrc && \
     echo '# direnv - automatically load .env files' >> ~/.zshrc && \
     echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc && \
-    echo 'export VISUAL=vim' >> ~/.zshrc
+    echo 'export VISUAL=vim' >> ~/.zshrc && \
+    echo '' >> ~/.zshrc && \
+    # Configure direnv to automatically load .env files
+    mkdir -p ~/.config/direnv && \
+    echo 'dotenv_if_exists' > ~/.config/direnv/direnvrc
 
 # Install Claude and create config directory
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} && \

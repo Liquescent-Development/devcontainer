@@ -44,6 +44,14 @@ After adding the template, customize your environment by:
 2. Configure your settings (1Password tokens, custom domains, etc.)
 3. Rebuild the container
 
+### Environment Variables
+
+The container automatically loads environment variables from `.env` files using `direnv`:
+
+- **Automatic loading**: When you `cd` into a directory with a `.env` file, variables are automatically loaded
+- **Security**: The included `.envrc` file enables safe `.env` loading
+- **First use**: Run `direnv allow` when prompted to trust the directory
+
 ## 🌟 Features
 
 - **Languages**: Node.js, Go, Python, Rust, .NET
