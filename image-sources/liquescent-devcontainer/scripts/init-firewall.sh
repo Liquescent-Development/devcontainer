@@ -45,6 +45,17 @@ readonly BUILTIN_DOMAINS=(
     "gallery.vsassets.io"
     "gallerycdn.vsassets.io"
     "vscode.blob.core.windows.net"
+    "www.vscode-unpkg.net"  # Fallback CDN
+    # Publisher-specific CDNs
+    "anthropic.gallerycdn.vsassets.io"
+    "streetsidesoftware.gallerycdn.vsassets.io"
+    "dbaeumer.gallerycdn.vsassets.io"
+    "ms-azuretools.gallerycdn.vsassets.io"
+    "github.gallerycdn.vsassets.io"
+    "ms-vscode.gallerycdn.vsassets.io"
+    "golang.gallerycdn.vsassets.io"
+    "rust-lang.gallerycdn.vsassets.io"
+    "ms-python.gallerycdn.vsassets.io"
 )
 
 # 1Password configuration
